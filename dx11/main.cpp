@@ -1,93 +1,93 @@
 #include "main.h"
-#include <sstream>
-#include <iomanip>
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+#include "pshader.h"
+#include "vshader.h"
 
-using namespace std;
+using namespace cbs;
 
+// 셰이더 상수 구조체
 struct ShaderConst
 {
 	XMFLOAT4 vColor;
 };
 
-Main::Main()
-	:D3D11Device(WIDTH, HEIGHT)
+// 정점 구조체
+struct Vertex
 {
+	XMFLOAT3 pos;
+	XMFLOAT2 tex;
+};
+
+Main::Main() :D3D11Device(800, 600)
+{		
+	// 버택스 버퍼 생성
 	static const float vertices[] =
 	{
-		0, 1, 0 ,
-		1, -1, 0,
-		-1, -1, 0
+		-1, 1, 0,	0, 0,
+		1, 1, 0,	1, 0,
+		-1, -1, 0,	0, 1,
+		1, -1, 0,	1, 1
 	};
+	m_vbQuad = Buffer(D3D11_BIND_VERTEX_BUFFER, vertices);
 
+	// 셰이더 상수 생성
+	m_constbuffer = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(ShaderConst));
+
+	// 정점 셰이더 로드 및 버텍스 인풋 레이어 생성
 	static const D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, pos), D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, tex), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-	
-	m_vb = Buffer(m_device, D3D11_BIND_VERTEX_BUFFER, vertices);
-	m_constbuffer = Buffer(m_device, D3D11_BIND_CONSTANT_BUFFER, sizeof(ShaderConst));
+	m_vs = VertexShader(s_vshader, layout);
 
-	m_vs = LoadVertexShader(L"shaders/vshader.hlsl", &m_layout, layout);
-	m_ps = LoadPixelShader(L"shaders/pshader.hlsl");
+	// 픽셀 셰이더 로드
+	m_ps = PixelShader(s_pshader);
+
+	// 텍스처 로드
+	m_tex = Texture(L"test.BMP");
+
+	// 샘플러 생성
+	m_sam = SamplerState(D3D11_TEXTURE_ADDRESS_WRAP, D3D11_FILTER_MIN_MAG_MIP_LINEAR);
 }
 Main::~Main()
 {
 }
 void Main::loop()
 {
+	// 색 버퍼 지우기
 	float colors[4] = { 0,0,0,1 };
-	m_context->ClearRenderTargetView(m_rtv, colors);
+	g_context->ClearRenderTargetView(g_rtv, colors);
 
-	m_context->VSSetShader(m_vs, nullptr, 0);
-	m_context->PSSetShader(m_ps, nullptr, 0);
+	// 셰이더 설정
+	g_context->VSSetShader(m_vs, nullptr, 0);
+	g_context->IASetInputLayout(m_vs.getInputLayer());
+	g_context->PSSetShader(m_ps, nullptr, 0);
 
-	UINT stride = sizeof(float) * 3;
+	// 버텍스 버퍼 설정
+	UINT stride = sizeof(float) * 5;
 	UINT offset = 0;
-	m_context->IASetVertexBuffers(0, 1, &m_vb, &stride, &offset);
-	m_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_context->IASetInputLayout(m_layout);
+	g_context->IASetVertexBuffers(0, 1, &m_vbQuad, &stride, &offset);
 
-	ShaderConst sc;
-	sc.vColor = XMFLOAT4(1, 0, 0, 1);
-	m_context->UpdateSubresource(m_constbuffer, 0, nullptr, &sc, 0, 0);
-	m_context->VSSetConstantBuffers(0, 1, &m_constbuffer);
-	m_context->PSSetConstantBuffers(0, 1, &m_constbuffer);
-
-	m_context->Draw(3, 0);
+	// 프리미티브 토폴로지 설정
+	g_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	
-	m_chain->Present(1, 0);
-}
+	// 텍스처 설정
+	g_context->PSSetShaderResources(0, 1, &m_tex);
 
-int forSEH()
-{
-	try
-	{
-		Main main;
-		int res = main.messageLoop();
-		_CrtDumpMemoryLeaks();
-		return res;
-	}
-	catch (DXException & ex)
-	{
-		wstringstream ss;
-		ss << L"오류가 났소. \r\n오류코드: 0x" << hex << (HRESULT)ex;
-		MessageBox(nullptr, ss.str().c_str(), nullptr, MB_OK | MB_ICONERROR);
-		return (int)(HRESULT)ex;
-	}
-}
-int WINAPI wWinMain(HINSTANCE hInstance,HINSTANCE,LPWSTR,int)
-{
-	g_hInst = hInstance;
-	__try
-	{
-		return forSEH();
-	}
-	__except(GetExceptionCode() != EXCEPTION_BREAKPOINT ? EXCEPTION_ACCESS_VIOLATION : EXCEPTION_EXECUTE_HANDLER)
-	{
-		MessageBox(nullptr, L"죽었소 ㅠㅠ", nullptr, MB_OK | MB_ICONERROR);
-		return -1;
-	}
+	// 텍스처 샘플러 설정
+	g_context->PSSetSamplers(0, 1, &m_sam);
+
+	// 셰이더 상수 업데이트
+	ShaderConst sc;
+	sc.vColor = XMFLOAT4(0.5f, 0, 0, 1);
+	g_context->UpdateSubresource(m_constbuffer, 0, nullptr, &sc, 0, 0);
+	g_context->VSSetConstantBuffers(0, 1, &m_constbuffer);
+	g_context->PSSetConstantBuffers(0, 1, &m_constbuffer);
+
+	// 렌더링
+	g_context->Draw(4, 0);
+	
+	// 프레젠트
+	g_chain->Present(1, 0);
 }

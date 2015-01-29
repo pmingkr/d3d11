@@ -2,7 +2,7 @@
 
 #include "dx11.h"
 
-class Main :public D3D11Device
+class Main :public cbs::D3D11Device
 {
 public:
 	Main();
@@ -12,12 +12,12 @@ public:
 
 private:
 
-	Buffer m_vb;
-	Buffer m_constbuffer;
+	cbs::Buffer m_vbQuad; // 정점 버퍼
+	cbs::Buffer m_constbuffer; // 셰이더 상수 버퍼
 
-	AutoRelease<ID3D11VertexShader>	m_vs;
-	AutoRelease<ID3D11PixelShader>	m_ps;
-	AutoRelease<ID3D11InputLayout>	m_layout;
+	cbs::VertexShader	m_vs; // 정점 셰이더
+	cbs::PixelShader	m_ps; // 픽셀 셰이더
 
-	XMMATRIX m_viewmatrix;
+	cbs::Texture		m_tex; // 텍스처
+	cbs::SamplerState	m_sam; // 텍스처 샘플러
 };

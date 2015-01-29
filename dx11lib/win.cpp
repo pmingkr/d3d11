@@ -1,6 +1,9 @@
 #include "win.h"
 
-LRESULT CALLBACK Window::_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+
+HWND cbs::g_hWnd = nullptr;
+
+LRESULT CALLBACK cbs::Window::_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	try
 	{
@@ -23,9 +26,12 @@ LRESULT CALLBACK Window::_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	}
 }
 
+using namespace cbs;
 
 Window::Window(int width, int height)
 {
+	if(g_hWnd != nullptr) throw DuplicationException();
+
 	WNDCLASSEX wcex;
 	memset(&wcex, 0, sizeof(wcex));
 	wcex.cbSize = sizeof(wcex);
@@ -42,8 +48,8 @@ Window::Window(int width, int height)
 	int nX = (GetSystemMetrics(SM_CXSCREEN) - nWidth) / 2;
 	int nY = (GetSystemMetrics(SM_CYSCREEN) - nHeight) / 2;
 
-	m_hWnd = CreateWindow(wcex.lpszClassName, TEXT("Direct3D 11 Window"), WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, nX, nY, nWidth, nHeight, nullptr, nullptr, g_hInst, nullptr);
-	if (m_hWnd == nullptr) throw WindowException();
+	g_hWnd = CreateWindow(wcex.lpszClassName, TEXT("Direct3D 11 Window"), WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, nX, nY, nWidth, nHeight, nullptr, nullptr, g_hInst, nullptr);
+	if (g_hWnd == nullptr) throw WindowException();
 }
 Window::~Window()
 {
