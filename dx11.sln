@@ -6,8 +6,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dx11", "dx11\dx11.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dx11lib", "dx11lib\dx11lib.vcxproj", "{DDD6B25C-120D-4C98-BAF2-D03CCE7CCA30}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXTex", "DirectXTex\DirectXTex_Desktop_2015.vcxproj", "{371B9FA9-4C90-4AC6-A123-ACED756D6C77}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "라이브러리", "라이브러리", "{19FC3FF2-0563-43D2-BA45-812A931A0D2A}"
 EndProject
 Global
@@ -43,24 +41,11 @@ Global
 		{DDD6B25C-120D-4C98-BAF2-D03CCE7CCA30}.Release|Win32.ActiveCfg = Release|Win32
 		{DDD6B25C-120D-4C98-BAF2-D03CCE7CCA30}.Release|Win32.Build.0 = Release|Win32
 		{DDD6B25C-120D-4C98-BAF2-D03CCE7CCA30}.Release|x64.ActiveCfg = Release|Win32
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|Win32.ActiveCfg = Debug|Win32
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|Win32.Build.0 = Debug|Win32
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|x64.ActiveCfg = Debug|x64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|x64.Build.0 = Debug|x64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|Win32.ActiveCfg = Profile|Win32
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|Win32.Build.0 = Profile|Win32
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|x64.ActiveCfg = Profile|x64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Profile|x64.Build.0 = Profile|x64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|Win32.ActiveCfg = Release|Win32
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|Win32.Build.0 = Release|Win32
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|x64.ActiveCfg = Release|x64
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{DDD6B25C-120D-4C98-BAF2-D03CCE7CCA30} = {19FC3FF2-0563-43D2-BA45-812A931A0D2A}
-		{371B9FA9-4C90-4AC6-A123-ACED756D6C77} = {19FC3FF2-0563-43D2-BA45-812A931A0D2A}
 	EndGlobalSection
 EndGlobal

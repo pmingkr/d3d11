@@ -7,7 +7,6 @@
 #include <dxgi.h>
 #include <d2d1.h>
 #include "WICTextureLoader\WICTextureLoader.h"
-#include <DirectXTex.h>
 
 using namespace cbs;
 

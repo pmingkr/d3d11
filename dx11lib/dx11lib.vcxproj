@@ -41,11 +41,6 @@
     <ClCompile Include="WICTextureLoader\WICTextureLoader.cpp" />
     <ClCompile Include="win.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DirectXTex\DirectXTex_Desktop_2015.vcxproj">
-      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DDD6B25C-120D-4C98-BAF2-D03CCE7CCA30}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
