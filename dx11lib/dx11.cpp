@@ -108,10 +108,10 @@ D3D11Device::~D3D11Device()
 }
 
 DXException::DXException(HRESULT hr)
+	:hr(hr), filename(nullptr), line(0)
 {
-	m_hr = hr;
 }
-DXException::operator HRESULT()
+DXException::DXException(HRESULT hr, const wchar_t * filename, int line)
+	:hr(hr), filename(filename), line(line)
 {
-	return m_hr;
 }

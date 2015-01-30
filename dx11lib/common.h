@@ -25,13 +25,17 @@ namespace cbs
 	{
 	public:
 		DXException(HRESULT hr);
-		operator HRESULT();
+		DXException(HRESULT hr, const wchar_t * filename, int line);
 
-	private:
-		HRESULT m_hr;
+		const HRESULT hr;
+		const wchar_t * const filename;
+		const int line;
 	};
 
 	extern HINSTANCE g_hInst;
 }
 
-#define throwhr(cmd)	{HRESULT hr; if(FAILED(hr = (cmd))) throw DXException(hr); }
+#define __UNWRAP2(x) L##x
+#define __UNWRAP(x) __UNWRAP2(x)
+
+#define throwhr(cmd)	{HRESULT hr; if(FAILED(hr = (cmd))) throw DXException(hr, __UNWRAP(__FILE__), __LINE__); }
