@@ -19,7 +19,7 @@ namespace cbs
 	public:
 		Assimp();
 	};
-
+	
 	class Model
 	{
 	public:
