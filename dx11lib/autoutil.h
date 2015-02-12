@@ -53,6 +53,13 @@ namespace cbs
 			if (m_ptr != nullptr) m_ptr->AddRef();
 			return *this;
 		}
+		template <typename T>
+		AutoRelease<T> as()
+		{
+			AutoRelease<T> t;
+			if(FAILED(m_ptr->QueryInterface(__uuidof(T), &t))) return nullptr;
+			return t;
+		}
 	};
 
 	template <typename T> class AutoDelete

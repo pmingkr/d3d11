@@ -44,6 +44,9 @@
     <ClInclude Include="samplerstate.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="assimp.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dx11.cpp">
@@ -71,6 +74,9 @@
       <Filter>WIC 텍스처 로더</Filter>
     </ClCompile>
     <ClCompile Include="samplerstate.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="assimp.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -28,6 +28,8 @@
 // We could load multi-frame images (TIFF/GIF) into a texture array.
 // For now, we just load the first frame (note: DirectXTex supports multi-frame images)
 
+#if _MSC_VER >= 1700
+
 #include <assert.h>
 
 // VS 2010's stdint.h conflicts with intsafe.h
@@ -940,3 +942,6 @@ HRESULT DirectX::CreateWICTextureFromFileEx( ID3D11Device* d3dDevice,
 
     return hr;
 }
+
+
+#endif
