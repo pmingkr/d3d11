@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+		<PropertyPageSchema Include="$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml" />
+		<AvailableItemName Include="CodegenItem">
+			<Targets>GenerateCode</Targets>
+		</AvailableItemName>
+	</ItemGroup>
+
+	<Target
+		Name="BeforeBuild">
+
+		<Message Text="test" />
+	</Target>
+	<Target
+	 Name="GenerateCode"
+	 BeforeTargets="ClCompile"
+	 Inputs="%(CodegenItem.Identity)"
+	 Outputs="%(CodegenItem.Identity).h">
+
+		<Message Text="Generating code: %(CodegenItem.Identity)" />
+		<Exec Command="codegen.bat %(CodegenItem.Identity) %(CodegenItem.Identity).h"/>
+	</Target>
+</Project>

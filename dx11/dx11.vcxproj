@@ -40,12 +40,12 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shader_common.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\dx11lib\dx11lib.vcxproj">
       <Project>{ddd6b25c-120d-4c98-baf2-d03cce7cca30}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shader_common.hlsli" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{06D9B86F-8A86-4575-A1FE-4FE5116D0B20}</ProjectGuid>
@@ -102,27 +102,27 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(SolutionDir)dx11lib;$(IncludePath);$(DXSDK_DIR)include</IncludePath>
+    <IncludePath>$(SolutionDir)dx11lib/include;$(IncludePath);$(DXSDK_DIR)include</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)lib\x86</LibraryPath>
     <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(SolutionDir)dx11lib;$(IncludePath);$(DXSDK_DIR)include</IncludePath>
+    <IncludePath>$(SolutionDir)dx11lib/include;$(IncludePath);$(DXSDK_DIR)include</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)lib\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(SolutionDir)dx11lib;$(IncludePath);$(DXSDK_DIR)include</IncludePath>
+    <IncludePath>$(SolutionDir)dx11lib/include;$(IncludePath);$(DXSDK_DIR)include</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)lib\x86</LibraryPath>
     <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <ExecutablePath>$(DXSDK_DIR)Utilities\bin\x86;$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(SolutionDir)dx11lib;$(IncludePath);$(DXSDK_DIR)include</IncludePath>
+    <IncludePath>$(SolutionDir)dx11lib/include;$(IncludePath);$(DXSDK_DIR)include</IncludePath>
     <LibraryPath>$(LibraryPath);$(DXSDK_DIR)lib\x64</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -137,6 +137,18 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CustomBuildStep>
+      <Message>%(Filename)</Message>
+    </CustomBuildStep>
+    <FxCompile>
+      <VariableName>s_%(Filename)</VariableName>
+    </FxCompile>
+    <FxCompile>
+      <HeaderFileOutput>%(RelativeDir)%(Filename).h</HeaderFileOutput>
+    </FxCompile>
+    <FxCompile>
+      <ObjectFileOutput />
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -155,6 +167,9 @@
       <VariableName>s_%(Filename)</VariableName>
       <ObjectFileOutput />
     </FxCompile>
+    <CustomBuildStep>
+      <Message>%(Filename)</Message>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -172,6 +187,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <CustomBuildStep>
+      <Message>%(Filename)</Message>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -194,8 +212,12 @@
       <VariableName>s_%(Filename)</VariableName>
       <ObjectFileOutput />
     </FxCompile>
+    <CustomBuildStep>
+      <Message>%(Filename)</Message>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\dx11lib\test.targets" />
   </ImportGroup>
 </Project>

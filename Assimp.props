@@ -6,6 +6,10 @@
     <IncludePath>$(SolutionDir)assimp;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)assimp;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-  <ItemDefinitionGroup />
+  <ItemDefinitionGroup>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)assimp\assimp.dll" "$(OutDir)assimp.dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

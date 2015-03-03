@@ -9,9 +9,7 @@ int forSEH()
 	try
 	{
 		Main main;
-		int res = main.messageLoop(); // 메세지 루프
-		_CrtDumpMemoryLeaks(); // 메모리 누수 감지
-		return res;
+		return main.messageLoop(); // 메세지 루프
 	}
 	catch (cbs::DXException & ex)
 	{
@@ -38,3 +36,18 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
 		return -1;
 	}
 }
+
+#pragma warning(disable:4074)
+#pragma init_seg(compiler)
+
+struct __StaticRun
+{
+	__StaticRun()
+	{
+		//_crtBreakAlloc = 252;
+	}
+	~__StaticRun()
+	{
+		_CrtDumpMemoryLeaks(); // 메모리 누수 감지
+	}
+} __staticRun;

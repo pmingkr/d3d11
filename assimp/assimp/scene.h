@@ -119,6 +119,11 @@ struct aiNode
 	  */
 	C_STRUCT aiMetadata* mMetaData;
 
+	// Additional user data, modified by 최백성
+	// Default = NULL
+	// 사용자 정의 변수
+	void * mAttachment;
+
 #ifdef __cplusplus
 	/** Constructor */
 	aiNode() 
@@ -130,6 +135,7 @@ struct aiNode
 		, mNumMeshes(0)
 		, mMeshes(NULL)
 		, mMetaData(NULL)
+		, mAttachment(NULL)
 	{
 	}
 	
@@ -144,6 +150,7 @@ struct aiNode
 		, mNumMeshes(0)
 		, mMeshes(NULL)
 		, mMetaData(NULL)
+		, mAttachment(NULL)
 	{
 	}
 

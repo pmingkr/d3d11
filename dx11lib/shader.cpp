@@ -1,5 +1,5 @@
-#include "shader.h"
-#include "device.h"
+#include "include/cbs/d3d11/shader.h"
+#include "include/cbs/d3d11/device.h"
 using namespace cbs;
 
 namespace
