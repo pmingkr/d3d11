@@ -17,20 +17,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="vs_skinned.hlsl">
-      <Filter>셰이더</Filter>
-    </FxCompile>
-    <FxCompile Include="vs_basic.hlsl">
-      <Filter>셰이더</Filter>
-    </FxCompile>
-    <FxCompile Include="ps_basic.hlsl">
-      <Filter>셰이더</Filter>
-    </FxCompile>
-    <FxCompile Include="ps_notexture.hlsl">
-      <Filter>셰이더</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="main.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -59,5 +45,19 @@
     <None Include="vs_common.hlsli">
       <Filter>셰이더</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="ps_basic.hlsl">
+      <Filter>셰이더</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ps_notexture.hlsl">
+      <Filter>셰이더</Filter>
+    </CustomBuild>
+    <CustomBuild Include="vs_basic.hlsl">
+      <Filter>셰이더</Filter>
+    </CustomBuild>
+    <CustomBuild Include="vs_skinned.hlsl">
+      <Filter>셰이더</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

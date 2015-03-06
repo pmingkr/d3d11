@@ -15,6 +15,14 @@
       <HeaderFileOutput>%(RelativeDir)%(Filename).h</HeaderFileOutput>
       <ObjectFileOutput />
     </FxCompile>
+    <CustomBuildStep />
+    <CustomBuildStep />
+    <CustomBuild>
+      <Command>set name=%(Filename)
+fxc /T %name:~0,2%_4_0 /Fh "%(RelativeDir)%(Filename).h"  /Vn "s_%(Filename)" /nologo "%(FullPath)"</Command>
+      <Message>%(Filename)%(Extension)</Message>
+      <Outputs>%(RelativeDir)%(Filename).h</Outputs>
+    </CustomBuild>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

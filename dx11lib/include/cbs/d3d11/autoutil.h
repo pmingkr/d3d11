@@ -160,7 +160,13 @@ namespace cbs
 			delete [] m_ptr;
 			m_ptr = new T[count];
 		}
-
+		
+		AutoDeleteArray& operator =(T* move)
+		{
+			this->~AutoDeleteArray();
+			new(this) AutoDeleteArray(move);
+			return *this;
+		}
 		AutoDeleteArray& operator =(AutoDeleteArray&& move)
 		{
 			this->~AutoDeleteArray();
