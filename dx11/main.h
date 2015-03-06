@@ -13,6 +13,7 @@ public:
 	void setMaterial(const cbs::Material & mtl); // override
 	void setWorld(const aiMatrix4x4 & matrix); // override
 	void setBoneWorlds(const cbs::Matrix4x3 * matrix, size_t m4x3count); // override
+	void drawModel(float delta, cbs::Model * model, double * time, aiMatrix4x4 matrix);
 
 private:
 
@@ -30,8 +31,9 @@ private:
 	cbs::DepthStencilState	m_depth; // 뎁스 스텐실 스테이트
 
 	cbs::Model			m_model; // 모델/타이니
-	cbs::Model			m_dwarf; // 모델/드워프
 	double				m_modelTime; // 모델의 애니메이션 진행 변수
+
+	cbs::Model			m_dwarf; // 모델/드워프
 	double				m_dwarfTime; // 모델의 애니메이션 진행 변수
 
 	DeltaMeasure		m_delta; // 델타 측정기

@@ -46,6 +46,50 @@ struct Vertex
 
 Main * g_main;
 
+class 붕어빵
+{
+private:
+	const char * 붕어빵의_이름;
+	int 붕어빵_크기;
+	int 단팥의_양;
+
+public:
+	void 버리기()
+	{
+		붕어빵_크기 = 0;
+		단팥의_양 = 0;
+	}
+	void 먹기(int 먹는양)
+	{
+		붕어빵_크기 -= 먹는양;
+		단팥의_양 -= 먹는양/2;
+	}
+
+};
+
+class Model3D
+{
+private:
+
+public:
+	// 생성하기
+	void create(const char * name)
+	{
+	}
+
+	// 화면에_출력
+	void render(float x,float y)
+	{
+		
+	}
+};
+
+void main()
+{
+	붕어빵 붕어A;
+	붕어A.버리기();
+}
+
 Main::Main() :D3D11Device(800, 600)
 {		
 	g_main = this;
@@ -120,8 +164,6 @@ void Main::loop()
 	g_context->VSSetConstantBuffers(0, 1, &m_cb_vsCommon);
 	g_context->PSSetConstantBuffers(0, 1, &m_cb_psBasic);
 
-	aiMatrix4x4 mTmp;
-
 	// 뷰/프로젝션 행렬 설정
 	{
 		XMMATRIX mVP = XMMatrixLookAtLH(vec(-1000.f, 0, 0), vec(0, 0, 0), vec(0, 0, -1));
@@ -131,22 +173,20 @@ void Main::loop()
 		sc.mVP = XMMatrixTranspose(mVP);
 		g_context->UpdateSubresource(m_cb_vsCommon, 0, nullptr, &sc, 0, 0);
 	}
+	aiMatrix4x4 mTmp;
+	aiMatrix4x4 mRes;
+	mRes = aiMatrix4x4::Translation(aiVector3D(200.f, 0.f, 200.f), mTmp);
+	mRes *= aiMatrix4x4::RotationZ(GetTickCount() / 800.f, mTmp);
+	drawModel(delta, &m_model, &m_modelTime, mRes); // tiny rendering
 
-	// 타이니 렌더링
-	{
-		// 애니메이션 재생
-		Model::Pose pose;
-		Model::AnimationStatus status;
-		status.animation = m_model.getAnimation(0); // 애니메이션 가져오기
-		status.time = m_modelTime + delta; // 애니메이션 시간 이동
-		pose.set(&status); // 포즈 가져오기
-		m_modelTime = status.time; // 애니메이션 시간 보정
+	// 180 = XM_PI
+	// 90 = XM_PI/2
+	// -90 = -XM_PI/2
 
-		// 월드 행렬 설정
-		aiMatrix4x4 mRes;
-		mRes = aiMatrix4x4::Translation(vec(0.f, 0.f, 200.f), mTmp);
-		mRes *= aiMatrix4x4::RotationZ(GetTickCount() / 800.f, mTmp);
-		pose.transform(mRes);
+	mRes = aiMatrix4x4::Translation(aiVector3D(500.f, 0.f, 200.f), mTmp);
+	mRes *= aiMatrix4x4::RotationZ(GetTickCount() / 800.f, mTmp);
+	mRes *= aiMatrix4x4::Scaling(aiVector3D(10.f, 10.f, 10.f), mTmp);
+	drawModel(delta, &m_dwarf, &m_dwarfTime, mRes); // dwarf rendering
 
 		// 렌더링
 		render(m_model, pose);
@@ -263,4 +303,27 @@ struct __StaticRun
 	}
 } __staticRun;
 
-#pragma endregion
+#pragma endregionvoid Main::drawModel(float delta, cbs::Model * model, double * time, aiMatrix4x4 matrix)
+{
+	// 타이니 렌더링
+	{
+		//Object a;
+		//Object * b;
+		// a.function();
+		// b->function();
+
+		// 애니메이션 재생
+		Model::Pose pose;
+		Model::AnimationStatus status;
+		status.animation = model->getAnimation(0); // 애니메이션 가져오기
+		status.time = *time + delta; // 애니메이션 시간 이동
+		pose.set(&status); // 포즈 가져오기
+		*time = status.time; // 애니메이션 시간 보정
+
+		// 월드 행렬 설정
+		pose.transform(matrix);
+
+		// 렌더링
+		render(*model, pose);
+	}	
+}
