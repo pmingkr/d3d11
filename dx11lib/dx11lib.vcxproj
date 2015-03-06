@@ -29,12 +29,14 @@
     <ClInclude Include="include\cbs\d3d11\shader.h" />
     <ClInclude Include="include\cbs\d3d11\state.h" />
     <ClInclude Include="include\cbs\d3d11\texture.h" />
+    <ClInclude Include="include\cbs\deltams.h" />
     <ClInclude Include="WICTextureLoader\WICTextureLoader.h" />
     <ClInclude Include="include\cbs\d3d11\win.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="assimp.cpp" />
     <ClCompile Include="buffer.cpp" />
+    <ClCompile Include="deltams.cpp" />
     <ClCompile Include="encoding.cpp" />
     <ClCompile Include="device.cpp" />
     <ClCompile Include="d3d11.cpp" />

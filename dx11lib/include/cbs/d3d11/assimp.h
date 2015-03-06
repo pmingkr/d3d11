@@ -13,7 +13,10 @@ struct aiMaterial;
 struct aiNodeAnim;
 struct aiAnimation;
 
+#pragma warning(push)
+#pragma warning(disable:4819)
 #include <assimp/types.h>
+#pragma warning(pop)
 
 namespace cbs
 {

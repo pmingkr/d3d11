@@ -20,12 +20,6 @@
     <ClInclude Include="main.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="deltams.h">
-      <Filter>기타 도구</Filter>
-    </ClInclude>
-    <ClInclude Include="commonutil.h">
-      <Filter>기타 도구</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,9 +27,6 @@
     </ClCompile>
     <ClCompile Include="entry.cpp">
       <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="deltams.cpp">
-      <Filter>기타 도구</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -47,17 +38,17 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="ps_basic.hlsl">
+    <FxCompile Include="ps_basic.hlsl">
       <Filter>셰이더</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ps_notexture.hlsl">
+    </FxCompile>
+    <FxCompile Include="ps_notexture.hlsl">
       <Filter>셰이더</Filter>
-    </CustomBuild>
-    <CustomBuild Include="vs_basic.hlsl">
+    </FxCompile>
+    <FxCompile Include="vs_basic.hlsl">
       <Filter>셰이더</Filter>
-    </CustomBuild>
-    <CustomBuild Include="vs_skinned.hlsl">
+    </FxCompile>
+    <FxCompile Include="vs_skinned.hlsl">
       <Filter>셰이더</Filter>
-    </CustomBuild>
+    </FxCompile>
   </ItemGroup>
 </Project>

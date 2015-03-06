@@ -5,6 +5,9 @@
 #include "vs_basic.h"
 #include "vs_skinned.h"
 
+#include <sstream>
+
+using namespace std;
 using namespace cbs;
 
 // vs_common.hlsli 상수 구조체
@@ -41,8 +44,12 @@ struct Vertex
 	XMFLOAT4 blendwgt;
 };
 
+Main * g_main;
+
 Main::Main() :D3D11Device(800, 600)
 {		
+	g_main = this;
+
 	// 사각형 정점 버퍼 생성
 	static const float vertices[] =
 	{
@@ -117,7 +124,7 @@ void Main::loop()
 
 	// 뷰/프로젝션 행렬 설정
 	{
-		XMMATRIX mVP = XMMatrixLookAtLH(vector(-1000.f, 0, 0), vector(0, 0, 0), vector(0, 0, -1));
+		XMMATRIX mVP = XMMatrixLookAtLH(vec(-1000.f, 0, 0), vec(0, 0, 0), vec(0, 0, -1));
 		mVP *= XMMatrixPerspectiveFovLH(XM_PI/3, 800/600.f, 50.f, 10000.f);
 		
 		CB_VSCommon sc;
@@ -137,7 +144,7 @@ void Main::loop()
 
 		// 월드 행렬 설정
 		aiMatrix4x4 mRes;
-		mRes = aiMatrix4x4::Translation(aiVector3D(0.f, 0.f, 200.f), mTmp);
+		mRes = aiMatrix4x4::Translation(vec(0.f, 0.f, 200.f), mTmp);
 		mRes *= aiMatrix4x4::RotationZ(GetTickCount() / 800.f, mTmp);
 		pose.transform(mRes);
 
@@ -157,9 +164,8 @@ void Main::loop()
 
 		// 월드 행렬 설정
 		aiMatrix4x4 mRes;
-		float scale = 8.f;
-		mRes = aiMatrix4x4::Translation(aiVector3D(0, 300.f, 200.f), mTmp);
-		mRes *= aiMatrix4x4::Scaling(aiVector3D(scale, scale, scale), mTmp);
+		mRes = aiMatrix4x4::Translation(vec(0, 300.f, 200.f), mTmp);
+		mRes *= aiMatrix4x4::Scaling(vec(8.f), mTmp);
 		mRes *= aiMatrix4x4::RotationZ(GetTickCount() / 800.f, mTmp);
 		mRes *= aiMatrix4x4::RotationX(XM_PI * -0.5f, mTmp);
 		pose.transform(mRes);
@@ -218,3 +224,43 @@ void Main::setBoneWorlds(const Matrix4x3 * matrix, size_t m4x3count)
 	memcpy(&sc.mWorlds, matrix, m4x3count * (sizeof(float)*4*3));
 	g_context->UpdateSubresource(m_cb_vsSkinned, 0, nullptr, &sc, 0, 0);
 }
+
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
+{
+	cbs::g_hInst = hInstance;
+	try
+	{
+		Main main;
+		return main.messageLoop(); // 메세지 루프
+	}
+	catch (cbs::DXException & ex)
+	{
+		wstringstream ss;
+		ss << ex.filename << L'(' << dec << ex.line << L"): 오류가 낫소. (오류코드: 0x" << hex << ex.hr << L')' << endl;
+		OutputDebugString(ss.str().c_str());
+
+		ss.str(L"");
+		ss << L"오류가 났소. \r\n오류코드: 0x" << hex << ex.hr;
+		MessageBox(nullptr, ss.str().c_str(), nullptr, MB_OK | MB_ICONERROR);
+		return (int)ex.hr;
+	}
+}
+
+#pragma region 메모리 누수 감지
+
+#pragma warning(disable:4074)
+#pragma init_seg(compiler)
+
+struct __StaticRun
+{
+	__StaticRun()
+	{
+		//_crtBreakAlloc = 252;
+	}
+	~__StaticRun()
+	{
+		_CrtDumpMemoryLeaks(); // 메모리 누수 감지
+	}
+} __staticRun;
+
+#pragma endregion

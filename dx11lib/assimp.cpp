@@ -2,9 +2,14 @@
 #include "include/cbs/d3d11/device.h"
 #include "include/cbs/d3d11/texture.h"
 #include "include/cbs/d3d11/state.h"
+
+#pragma warning(push)
+#pragma warning(disable:4819)
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#pragma warning(pop)
+
 #include <new>
 #include <map>
 

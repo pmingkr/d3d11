@@ -1,8 +1,7 @@
 #pragma once
 
 #include <cbs/d3d11.h>
-#include "deltams.h"
-#include "commonutil.h"
+#include <cbs/deltams.h>
 
 class Main :public cbs::D3D11Device, public cbs::Assimp, public cbs::ModelRenderer
 {
@@ -37,3 +36,5 @@ private:
 
 	DeltaMeasure		m_delta; // 델타 측정기
 };
+
+extern Main * g_main;

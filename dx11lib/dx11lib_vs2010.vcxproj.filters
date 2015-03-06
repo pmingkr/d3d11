@@ -1,30 +1,93 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="assimp.cpp" />
-    <ClCompile Include="buffer.cpp" />
-    <ClCompile Include="encoding.cpp" />
-    <ClCompile Include="device.cpp" />
-    <ClCompile Include="d3d11.cpp" />
-    <ClCompile Include="common.cpp" />
-    <ClCompile Include="shader.cpp" />
-    <ClCompile Include="state.cpp" />
-    <ClCompile Include="texture.cpp" />
-    <ClCompile Include="WICTextureLoader\WICTextureLoader.cpp" />
-    <ClCompile Include="win.cpp" />
+    <ClCompile Include="assimp.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="buffer.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="common.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d11.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="device.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="encoding.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="shader.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="state.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="WICTextureLoader\WICTextureLoader.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="win.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="deltams.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="encoding.h" />
-    <ClInclude Include="include\cbs\d3d11\assimp.h" />
-    <ClInclude Include="include\cbs\d3d11\autoutil.h" />
-    <ClInclude Include="include\cbs\d3d11\buffer.h" />
-    <ClInclude Include="include\cbs\d3d11\device.h" />
-    <ClInclude Include="include\cbs\d3d11.h" />
-    <ClInclude Include="include\cbs\d3d11\common.h" />
-    <ClInclude Include="include\cbs\d3d11\shader.h" />
-    <ClInclude Include="include\cbs\d3d11\state.h" />
-    <ClInclude Include="include\cbs\d3d11\texture.h" />
-    <ClInclude Include="WICTextureLoader\WICTextureLoader.h" />
-    <ClInclude Include="include\cbs\d3d11\win.h" />
+    <ClInclude Include="include\cbs\d3d11\win.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\assimp.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\autoutil.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\buffer.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\common.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\device.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="encoding.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\shader.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\state.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\texture.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="WICTextureLoader\WICTextureLoader.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\commonutil.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\deltams.h">
+      <Filter>util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="3d">
+      <UniqueIdentifier>{50d4696d-5fb9-44a1-a61d-934b94d5b4c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{bd2802e1-01e3-465d-af46-113a9ece95f0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

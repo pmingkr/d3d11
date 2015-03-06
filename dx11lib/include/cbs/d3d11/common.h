@@ -11,6 +11,9 @@
 #include <D3DX11.h>
 #include <D3D11.h>
 #include <xnamath.h>
+
+#pragma warning(disable:4819)
+#include <assimp/vector3.h>
 #pragma warning(pop)
 
 #include <stdexcept>
@@ -47,6 +50,20 @@ namespace cbs
 			SafeRelease(arr[i]);
 		}
 	}
+
+	class vec
+	{
+	public:
+		vec();
+		explicit vec(float x);
+		vec(float x, float y, float z, float w = 1.f);
+
+		operator const XMVECTOR&() const;
+		operator const aiVector3D&() const;
+
+	private:
+		__m128 m_vector;
+	};
 }
 
 #define __UNWRAP2(x) L##x

@@ -49,12 +49,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="commonutil.h" />
-    <ClInclude Include="deltams.h" />
     <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="deltams.cpp" />
     <ClCompile Include="entry.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
