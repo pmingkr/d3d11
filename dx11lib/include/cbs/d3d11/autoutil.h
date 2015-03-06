@@ -134,6 +134,45 @@ namespace cbs
 		AutoDelete& operator =(const AutoDelete& copy); // = delete
 	};
 
+	template <typename T> class AutoDeleteArray :public Pointer<T>
+	{
+	public:
+		AutoDeleteArray()
+		{
+			m_ptr = nullptr;
+		}
+		AutoDeleteArray(T * ptr)
+		{
+			m_ptr = ptr;
+		}
+		AutoDeleteArray(AutoDeleteArray && move)
+		{
+			m_ptr = move.m_ptr;
+			move.m_ptr = nullptr;
+		}
+		~AutoDeleteArray()
+		{
+			delete [] m_ptr;
+		}
+
+		void allocate(size_t count)
+		{
+			delete [] m_ptr;
+			m_ptr = new T[count];
+		}
+
+		AutoDeleteArray& operator =(AutoDeleteArray&& move)
+		{
+			this->~AutoDeleteArray();
+			new(this) AutoDeleteArray(std::move(move));
+			return *this;
+		}
+
+	private:
+		AutoDeleteArray(const AutoDeleteArray& copy); // = delete;
+		AutoDeleteArray& operator =(const AutoDeleteArray& copy); // = delete
+	};
+
 	template <typename T> class AutoClose
 	{
 	protected:

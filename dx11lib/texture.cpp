@@ -34,22 +34,17 @@ cbs::TextureData::TextureData(const wchar_t * filename)
 	m_reference = 0;
 	
 #if _MSC_VER >= 1700
-	throwhr(DirectX::CreateWICTextureFromFile(g_device, filename, nullptr, &m_ptr));
+	HRESULT hr = DirectX::CreateWICTextureFromFile(g_device, filename, nullptr, &m_ptr);
 #else
 	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(g_device, filename, nullptr, nullptr, &m_ptr, nullptr);
-	if (FAILED(hr))
-	{
-		if(hr == D3D11_ERROR_FILE_NOT_FOUND)
-		{
-			wchar_t temp[1024];
-			swprintf_s(temp, L"%ls 텍스처를 찾지 못함.\r\n", filename);
-			OutputDebugString(temp);
-			m_ptr = nullptr;
-			return;
-		}
-		throwhr(hr);
-	}
 #endif
+	if (SUCCEEDED(hr)) return;
+
+	wchar_t temp[1024];
+	swprintf_s(temp, L"%ls 텍스처를 열지 못하였습니다.\r\nHRESULT: 0x%08X\r\n", filename, hr);
+	OutputDebugString(temp);
+	MessageBox(g_hWnd, temp, nullptr, MB_OK | MB_ICONERROR);
+	m_ptr = nullptr;
 }
 
 ULONG cbs::TextureData::AddRef() //override

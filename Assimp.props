@@ -10,6 +10,11 @@
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)assimp\assimp.dll" "$(OutDir)assimp.dll"</Command>
     </PostBuildEvent>
+    <FxCompile>
+      <VariableName>s_%(Filename)</VariableName>
+      <HeaderFileOutput>%(RelativeDir)%(Filename).h</HeaderFileOutput>
+      <ObjectFileOutput />
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

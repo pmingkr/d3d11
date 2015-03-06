@@ -12,42 +12,104 @@
 
 namespace
 {
-	template <typename T, typename KEY> T interpolateKey(KEY * begin, unsigned int keynum, double time)
+	struct BoneWeight
 	{
-		KEY * end = begin + keynum - 1;
-		KEY * l = begin;
-		KEY * r = end;
+		unsigned char blendidx[cbs::AI_VERTEX_WEIGHT_COUNT];
+		float blendwgt[cbs::AI_VERTEX_WEIGHT_COUNT];
+	};
 
-		for (;;)
+	struct AnimationReader
+	{
+		size_t m_index;
+		cbs::Model::Pose * m_pose;
+		double m_time;
+		double m_duration;
+
+		template <typename T, typename KEY>
+		T interpolateKey(KEY * begin, unsigned int keynum, aiAnimBehaviour pre, aiAnimBehaviour post)
 		{
-			KEY * c = (r - l) / 2 + l;
-			if (c->mTime < time)
+			::Assimp::Interpolator<T> inter;
+
+			KEY * end = begin + keynum - 1;
+			KEY * l = begin;
+			KEY * r = end;
+			T out;
+
+			for (;;)
 			{
-				l = c + 1;
+				KEY * c = (r - l) / 2 + l;
+				if (c->mTime < m_time)
+				{
+					l = c + 1;
+				}
+				else
+				{
+					r = c - 1;
+				}
+				if (l <= r) continue;
+				if (r < begin)
+				{
+					switch (pre)
+					{
+					case aiAnimBehaviour_REPEAT:
+						inter(out, end->mValue, begin->mValue, (float)((m_duration + m_time - end->mTime) / (m_duration - end->mTime + begin->mTime)));
+						return out;
+					default:
+						return begin->mValue;
+					}
+				}
+				if (l > end)
+				{
+					switch (post)
+					{
+					case aiAnimBehaviour_REPEAT:
+						inter(out, end->mValue, begin->mValue, (float)((m_time - end->mTime) / (m_duration - end->mTime + begin->mTime)));
+						return out;
+					default:
+						return end->mValue;
+					}
+				}
+				inter(out, r->mValue, l->mValue, (float)((m_time - r->mTime) / (l->mTime - r->mTime)));
+				return out;
+			}
+		}
+
+		void _getAnimation(aiNode * node, const aiMatrix4x4 & mParent)
+		{
+			cbs::Model::NodeExtra* nodeex = (cbs::Model::NodeExtra*)node->mAttachment;
+
+			aiMatrix4x4 m = mParent;
+
+			if (nodeex != nullptr)
+			{
+				//m *= node->mTransformation;
+				aiNodeAnim * anim = nodeex->getAnimation(m_index);
+				if (anim != nullptr)
+				{
+					aiVector3D pos = interpolateKey<aiVector3D>(anim->mPositionKeys, anim->mNumPositionKeys, anim->mPreState, anim->mPostState);
+					aiQuaternion quat = interpolateKey<aiQuaternion>(anim->mRotationKeys, anim->mNumRotationKeys, anim->mPreState, anim->mPostState);
+					aiVector3D scale = interpolateKey<aiVector3D>(anim->mScalingKeys, anim->mNumScalingKeys, anim->mPreState, anim->mPostState);
+
+					aiMatrix4x4 m2;
+					m *= aiMatrix4x4::Translation(pos, m2);
+					m *= aiMatrix4x4(quat.GetMatrix());
+					m *= aiMatrix4x4::Scaling(scale, m2);
+				}
+				m_pose->setNodeTransform(nodeex->getId(), m);
 			}
 			else
 			{
-				r = c - 1;
+				m *= node->mTransformation;
 			}
-			if (l < r) continue;
-			if (r == l)
+
+			for (unsigned int n = 0; n < node->mNumChildren; ++n)
 			{
-				l = r + 1;
+				_getAnimation(node->mChildren[n], m);
 			}
-			else if (r <= begin)
-			{
-				return begin->mValue;
-			}
-			if (l >= end)
-			{
-				return end->mValue;
-			}
-			T out;
-			::Assimp::Interpolator<T> inter;
-			inter(out, r->mValue, l->mValue, (float)((time - l->mTime) / (r->mTime - l->mTime)));
-			return out;
 		}
-	}
+	};
+
+	const double DEFAULT_TICK_PER_SECOND = 10.0;
 }
 
 cbs::Assimp::Assimp()
@@ -68,9 +130,167 @@ cbs::Assimp::~Assimp()
 	aiDetachAllLogStreams();
 }
 
+cbs::Model::Pose::Pose()
+{
+	m_nodeCount = 0;
+}
+cbs::Model::Pose::~Pose()
+{
+}
+cbs::Model::Pose::Pose(const Pose& _copy)
+{
+	m_nodeCount = _copy.m_nodeCount;
+	if (m_nodeCount != 0)
+	{
+		m_nodeTransform.allocate(m_nodeCount);
+		memcpy(m_nodeTransform, _copy.m_nodeTransform, sizeof(aiMatrix4x4) * m_nodeCount);
+	}
+	else
+	{
+		m_nodeTransform = nullptr;
+	}
+}
+cbs::Model::Pose::Pose(Pose&& _move)
+{
+	m_nodeCount = _move.m_nodeCount;
+	m_nodeTransform = std::move(_move.m_nodeTransform);
+}
+cbs::Model::Pose& cbs::Model::Pose::operator =(const Pose& _copy)
+{
+	this->~Pose();
+	new(this) Pose(_copy);
+	return *this;
+}
+cbs::Model::Pose& cbs::Model::Pose::operator =(Pose&& _move)
+{
+	this->~Pose();
+	new(this) Pose(std::move(_move));
+	return *this;
+}
+void cbs::Model::Pose::clear()
+{
+	m_nodeCount = 0;
+	m_nodeTransform = nullptr;
+}
+void cbs::Model::Pose::setNodeTransform(size_t idx, const aiMatrix4x4& m)
+{
+	assert(m_nodeTransform != nullptr);
+	m_nodeTransform[idx] = m;
+}
+const aiMatrix4x4& cbs::Model::Pose::getNodeTransform(size_t idx) const
+{
+	assert(m_nodeTransform != nullptr);
+	return m_nodeTransform[idx];
+}
+void cbs::Model::Pose::transform(const aiMatrix4x4& m)
+{
+	for (size_t i = 0; i < m_nodeCount; i++)
+	{
+		aiMatrix4x4& nodem = m_nodeTransform[i];
+		nodem = m * nodem;
+	}
+}
+bool cbs::Model::Pose::set(AnimationStatus* status)
+{
+	assert(status != nullptr);
+	assert(status->animation != nullptr);
+
+	AnimationReader reader;
+	reader.m_index = status->animation->m_index;
+	reader.m_pose = this;
+	double tps = status->animation->m_tps;
+	double time = status->time;
+
+	if(time >= status->animation->m_duration)
+	{
+		time = fmod(time, status->animation->m_duration);
+		status->overed = true;
+	}
+	else
+	{
+		status->overed = false;
+	}
+	reader.m_time = tps * time;
+	reader.m_duration = tps * status->animation->m_duration;
+
+	_resize(status->animation->m_nodeCount);
+	reader._getAnimation(status->animation->m_root, aiMatrix4x4());
+	status->time = time;
+	return true;
+}
+void cbs::Model::Pose::_resize(size_t size)
+{
+	if(m_nodeCount >= size) return;
+
+	m_nodeTransform.allocate(size);
+	m_nodeCount = size;
+}
+
+cbs::Model::NodeExtra::NodeExtra(size_t id)
+	:m_id(id), m_nodeanim(nullptr)
+{
+}
+cbs::Model::NodeExtra::~NodeExtra()
+{
+}
+size_t cbs::Model::NodeExtra::getId()
+{
+	return m_id;
+}
+bool cbs::Model::NodeExtra::hasAnimation()
+{
+	return m_nodeanim != nullptr;
+}
+void cbs::Model::NodeExtra::setAnimationCount(size_t count)
+{
+	m_nodeanim = new aiNodeAnim*[count];
+	memset(m_nodeanim, 0, sizeof(aiNodeAnim*) * count);
+}
+void cbs::Model::NodeExtra::setAnimation(size_t id, aiNodeAnim * anim)
+{
+	m_nodeanim[id] = anim;
+}
+aiNodeAnim * cbs::Model::NodeExtra::getAnimation(size_t id)
+{
+	if(m_nodeanim == nullptr) return nullptr;
+	return m_nodeanim[id];
+}
+
+cbs::Model::Animation::Animation()
+	: m_nodeCount(0), m_animation(nullptr), m_index(0), m_root(nullptr), m_tps(DEFAULT_TICK_PER_SECOND)
+{
+}
+cbs::Model::Animation::Animation(Model * model, size_t idx)
+	: m_nodeCount(model->m_nodeCount), m_animation(model->m_scene->mAnimations[idx]), m_index(idx), m_root(model->m_scene->mRootNode)
+{
+	if (m_animation->mTicksPerSecond == 0)
+	{
+		m_tps = DEFAULT_TICK_PER_SECOND;
+	}
+	else
+	{
+		m_tps = m_animation->mTicksPerSecond;
+	}
+	m_duration = m_animation->mDuration / m_tps;
+}
+double cbs::Model::Animation::getDuration() const
+{
+	return m_duration;
+}
+double cbs::Model::Animation::getTPS() const
+{
+	return m_tps;
+}
+void cbs::Model::Animation::setTPS(double tps)
+{
+	m_tps = tps;
+	m_duration = m_animation->mDuration / tps;
+}
+
 cbs::Model::Model()
 {
 	m_scene = nullptr;
+	m_nodeCount = 0;
 }
 cbs::Model::Model(const char * strName)
 {
@@ -91,7 +311,7 @@ cbs::Model::~Model()
 	if (m_scene != nullptr)
 	{
 		_callEachNode(m_scene->mRootNode, [&](aiNode * node) {
-			delete [] ((aiNodeAnim**)node->mAttachment);
+			delete (NodeExtra*)node->mAttachment;
 		});
 		aiReleaseImport(m_scene);
 	}
@@ -100,16 +320,37 @@ cbs::Model::Model(Model&& _move)
 {
 	m_meshes = std::move(_move.m_meshes);
 	m_materials = std::move(_move.m_materials);
+	m_animations = std::move(_move.m_animations);
 	m_vb = std::move(_move.m_vb);
 	m_ib = std::move(_move.m_ib);
 	m_scene = _move.m_scene;
+	m_nodeCount = _move.m_nodeCount;
 	_move.m_scene = nullptr;
+	_move.m_nodeCount = 0;
 }
 cbs::Model & cbs::Model::operator =(Model && _move)
 {
 	this->~Model();
 	new(this) cbs::Model(std::move(_move));
 	return *this;
+}
+void cbs::Model::setAnimationTPS(double tps)
+{
+	for (unsigned int i = 0; i < m_scene->mNumAnimations; i++)
+	{
+		m_animations[i].setTPS(tps);
+	}
+}
+size_t cbs::Model::getAnimationCount() const
+{
+	return m_scene->mNumAnimations;
+}
+cbs::Model::Animation * cbs::Model::getAnimation(size_t animation) const
+{
+	assert(animation < m_scene->mNumAnimations);
+	Animation * anim = &m_animations[animation];
+	if(anim->m_animation == nullptr) return nullptr;
+	return anim;
 }
 cbs::Model::operator bool()
 {
@@ -140,8 +381,8 @@ void cbs::Model::_makeTexture(const char * strName)
 
 	if (m_scene->mNumMaterials == 0)
 	{
-		m_materials.resize(1);
-		Material& mtl = m_materials.front();
+		m_materials.allocate(1);
+		Material& mtl = m_materials[0];
 		mtl.diffuse = aiColor4D(1.f,1.f,1.f,1.f);
 		mtl.specular = aiColor4D(0.f, 0.f, 0.f, 0.f);
 		mtl.ambient = aiColor4D(0.2f, 0.2f, 0.2f, 1.f);
@@ -151,7 +392,7 @@ void cbs::Model::_makeTexture(const char * strName)
 	}
 	else
 	{
-		m_materials.resize(m_scene->mNumMaterials);
+		m_materials.allocate(m_scene->mNumMaterials);
 		for (unsigned int m = 0; m < m_scene->mNumMaterials; m++)
 		{
 			aiMaterial * mtl = m_scene->mMaterials[m];
@@ -242,16 +483,33 @@ void cbs::Model::_makeBuffer()
 	char * vbuffer;
 	vindex_t * ibuffer;
 
+	#pragma region 뼈대 이름 및 ID 지정
+	std::map<std::string, aiNode*> nodemap;
+	size_t id = 0;
+	_callEachNode(m_scene->mRootNode, [&](aiNode * node) {
+		if (node->mName.length != 0)
+		{
+			node->mAttachment = new NodeExtra(id++);
+			nodemap[node->mName.data] = node;
+		}
+		else if (node->mNumMeshes != 0)
+		{
+			node->mAttachment = new NodeExtra(id++);
+		}
+	});
+	m_nodeCount = id;
+	#pragma endregion
+
 	#pragma region 메쉬 전처리
 	{
-		m_meshes.resize(m_scene->mNumMeshes);
+		m_meshes = new MeshExtra[m_scene->mNumMeshes];
 		UINT icount = 0;
 		UINT vsize = 0;
 		UINT facecount = 0;
 		
-		for (size_t i = 0; i < m_meshes.size(); i++)
+		for (size_t i = 0; i < m_scene->mNumMeshes; i++)
 		{
-			Mesh& region = m_meshes[i];
+			MeshExtra& region = m_meshes[i];
 			const aiMesh * mesh = m_scene->mMeshes[i];
 
 			UINT stride = sizeof(aiVector3D);
@@ -269,6 +527,11 @@ void cbs::Model::_makeBuffer()
 			{
 				if (mesh->mColors[ci] == nullptr) continue;
 				stride += sizeof(aiColor4D);
+			}
+
+			if (mesh->mBones != nullptr)
+			{
+				stride += sizeof(BoneWeight);
 			}
 			region.stride = stride;
 			region.ioffset = icount;
@@ -302,7 +565,9 @@ void cbs::Model::_makeBuffer()
 			vsize += mesh->mNumVertices * stride;
 		}
 
-		vbuffer = new char[vsize + icount * sizeof(vindex_t)];
+		size_t vfullsize = vsize + icount * sizeof(vindex_t);
+		vbuffer = new char[vfullsize];
+		memset(vbuffer, 0, vfullsize);
 		ibuffer = (vindex_t*)(vbuffer + vsize);
 	}
 	#pragma endregion
@@ -315,11 +580,11 @@ void cbs::Model::_makeBuffer()
 	{
 		UINT voffset = 0;
 		UINT ioffset = 0;
-		for (size_t i = 0; i < m_meshes.size(); i++)
+		for (size_t i = 0; i < m_scene->mNumMeshes; i++)
 		{
-			Mesh& region = m_meshes[i];
+			MeshExtra& meshex = m_meshes[i];
 			const aiMesh * mesh = m_scene->mMeshes[i];
-			UINT stride = region.stride;
+			UINT stride = meshex.stride;
 
 			unsigned int vcount = mesh->mNumVertices;
 			unsigned int vsize = vcount * stride;
@@ -397,6 +662,39 @@ void cbs::Model::_makeBuffer()
 				vptr += sizeof(aiColor4D);
 			}
 
+			// fill bone
+			if (mesh->mBones != nullptr)
+			{
+				meshex.boneToNode.allocate(mesh->mNumBones);
+				assert(mesh->mNumBones <= 0xff); // 바이트 범위 제한
+				for (unsigned int bi = 0; bi < mesh->mNumBones; bi++)
+				{
+					aiBone * bone = mesh->mBones[bi];
+					auto res = nodemap.find(bone->mName.data);
+					if (res == nodemap.end())
+					{
+						OutputDebugString(L"노드 이름을 찾을 수 없습니다.\r\n");
+						DebugBreak();
+						continue;
+					}
+					meshex.boneToNode[bi] = ((NodeExtra*)res->second->mAttachment)->getId();
+
+					for (unsigned int wi = 0; wi < bone->mNumWeights; wi++)
+					{
+						aiVertexWeight &w = bone->mWeights[wi];
+						BoneWeight* bw = (BoneWeight*)(vptr + w.mVertexId * stride);
+						for (int j = 0; j < AI_VERTEX_WEIGHT_COUNT; j ++ )
+						{
+							if(bw->blendwgt[j] != 0.f) continue;
+							bw->blendidx[j] = (unsigned char)bi;
+							bw->blendwgt[j] = w.mWeight;
+							break;
+						}
+					}
+				}
+				vptr += sizeof(BoneWeight);
+			}
+
 			vptr -= stride;
 			vptr += vsize;
 		}
@@ -406,37 +704,35 @@ void cbs::Model::_makeBuffer()
 	}
 	#pragma endregion
 
-	std::map<std::string, aiNode*> nodemap;
-	_callEachNode(m_scene->mRootNode, [&](aiNode * node) { nodemap[node->mName.data] = node; });
-
 	unsigned int animcount = m_scene->mNumAnimations;
+
+	m_animations.allocate(animcount);
+
 	for (unsigned int i = 0; i < animcount; i++)
 	{
 		aiAnimation * anim = m_scene->mAnimations[i];
+		m_animations[i] = Animation(this, i);
+
 		anim->mMeshChannels; // TODO: 메쉬 애니메이션, 정점 단위의 애니메이션 기능
 
 		for (unsigned int c = 0; c < anim->mNumChannels; c++)
 		{
 			aiNodeAnim * na = anim->mChannels[c];
+
 			auto res = nodemap.find(na->mNodeName.data);
 			if (res == nodemap.end())
 			{
-				OutputDebugString(L"애니메이션으로 움직일 노드를 찾을 수 없습니다.\r\n");
+				OutputDebugString(L"노드 이름을 찾을 수 없습니다.\r\n");
 				DebugBreak();
 				continue;
 			}
-			
-			aiNode* node = res->second;
-			aiNodeAnim ** &nodeanim = (aiNodeAnim **&)node->mAttachment;
-			if (nodeanim == nullptr)
+			aiNode * node = res->second;
+			NodeExtra* nodeex = (NodeExtra*)node->mAttachment;
+			if (!nodeex->hasAnimation())
 			{
-				nodeanim = new aiNodeAnim*[animcount];
-				memset(nodeanim, 0, sizeof(aiNodeAnim*) * animcount);
+				nodeex->setAnimationCount(animcount);
 			}
-			nodeanim[i] = na;
-			
-			//na->mPreState; // TODO: 애니메이션 전의 상태 결정
-			//na->mPostState; // TODO: 애니메이션 후의 상태 결정
+			nodeex->setAnimation(i,na);
 		}
 	}
 
@@ -453,88 +749,84 @@ void cbs::Model::_callEachNode(aiNode * node, LAMBDA &lambda)
 
 void cbs::ModelRenderer::render(const Model & model, const aiMatrix4x4 & world)
 {
+	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
 	_renderNode(model, model.m_scene->mRootNode, world);
 }
-void cbs::ModelRenderer::render(const Model & model, const aiMatrix4x4 & world, size_t animation, double time)
+void cbs::ModelRenderer::render(const Model & model, const Model::Pose & pose)
 {
-	assert(animation < model.m_scene->mNumAnimations); // 애니메이션 번호가 넘어갔는지
-	_renderNode(model, model.m_scene->mRootNode, world, animation, time);
+	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
+	_renderNode(model, model.m_scene->mRootNode, pose);
 }
 void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const aiMatrix4x4 & mParent)
 {
 	aiMatrix4x4 m = mParent * node->mTransformation;
 
-	// update transform
-	setWorld(m);
-
-	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
-
-	// draw all meshes assigned to this node
-	for (unsigned int n = 0; n < node->mNumMeshes; ++n)
+	if(node->mNumMeshes != 0)
 	{
-		const aiMesh* mesh = model.m_scene->mMeshes[node->mMeshes[n]];
-		const Model::Mesh& vbregion = model.m_meshes[node->mMeshes[n]];
-		const cbs::Material& mtl = model.m_materials[mesh->mMaterialIndex];
+		setWorld(m);
 
-		g_context->IASetVertexBuffers(0, 1, &model.m_vb, &vbregion.stride, &vbregion.offset);
-		g_context->RSSetState(mtl.rasterizer);
-		setMaterial(mtl);
-		g_context->IASetPrimitiveTopology(vbregion.topology);
-		g_context->DrawIndexed(vbregion.icount, vbregion.ioffset, 0);
+		for (unsigned int n = 0; n < node->mNumMeshes; ++n)
+		{
+			const aiMesh* mesh = model.m_scene->mMeshes[node->mMeshes[n]];
+			const Model::MeshExtra& vbregion = model.m_meshes[node->mMeshes[n]];
+			const cbs::Material& mtl = model.m_materials[mesh->mMaterialIndex];
+
+			g_context->IASetVertexBuffers(0, 1, &model.m_vb, &vbregion.stride, &vbregion.offset);
+			g_context->RSSetState(mtl.rasterizer);
+			setMaterial(mtl);
+			g_context->IASetPrimitiveTopology(vbregion.topology);
+			g_context->DrawIndexed(vbregion.icount, vbregion.ioffset, 0);
+		}
 	}
 
-	// draw all children
 	for (unsigned int n = 0; n < node->mNumChildren; ++n)
 	{
 		_renderNode(model, node->mChildren[n], m);
 	}
 }
-void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const aiMatrix4x4 & mParent, size_t animation, double time)
+void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const Model::Pose & pose)
 {
-	aiMatrix4x4 m = mParent * node->mTransformation;
+	Model::NodeExtra* nodeex = (Model::NodeExtra*)node->mAttachment;
 
-	// update transform
-	setWorld(m);
-
-	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
-
-	if(node->mAttachment != nullptr)
-	{
-		aiNodeAnim* anim = ((aiNodeAnim**)node->mAttachment)[animation];
-		if(anim != nullptr)
-		{
-			aiVector3D pos = interpolateKey<aiVector3D>(anim->mPositionKeys, anim->mNumPositionKeys, time);
-			aiQuaternion quat = interpolateKey<aiQuaternion>(anim->mRotationKeys, anim->mNumRotationKeys, time);
-			aiVector3D scale = interpolateKey<aiVector3D>(anim->mScalingKeys, anim->mNumScalingKeys, time);
-
-			aiMatrix4x4 m2;
-			m *= aiMatrix4x4::Translation(pos, m2);
-			m *= aiMatrix4x4(quat.GetMatrix());
-			m *= aiMatrix4x4::Scaling(scale, m2);
-		}
-	}
-
-	// draw all meshes assigned to this node
 	for (unsigned int n = 0; n < node->mNumMeshes; ++n)
 	{
 		const aiMesh* mesh = model.m_scene->mMeshes[node->mMeshes[n]];
-		const Model::Mesh& vbregion = model.m_meshes[node->mMeshes[n]];
+		const Model::MeshExtra& meshex = model.m_meshes[node->mMeshes[n]];
 		const cbs::Material& mtl = model.m_materials[mesh->mMaterialIndex];
-		
-		//mesh->mBones;
 
-		mesh->mNumBones;
-		
-		g_context->IASetVertexBuffers(0, 1, &model.m_vb, &vbregion.stride, &vbregion.offset);
+		if (mesh->mBones != nullptr)
+		{
+			Matrix4x3 bones[AI_BONE_LIMIT];
+			if (mesh->mNumBones == 1)
+			{
+				unsigned int nodeId = meshex.boneToNode[0];
+				setWorld(pose.getNodeTransform(nodeId) *mesh->mBones[0]->mOffsetMatrix);
+			}
+			else
+			{
+				for (unsigned int bi = 0; bi < mesh->mNumBones; bi++)
+				{
+					unsigned int nodeId = meshex.boneToNode[bi];
+					bones[bi] = (Matrix4x3&)(pose.m_nodeTransform[nodeId] * mesh->mBones[bi]->mOffsetMatrix);
+				}
+				setBoneWorlds(bones, mesh->mNumBones);
+			}
+		}
+		else
+		{
+			assert(nodeex != nullptr);
+			setWorld(pose.getNodeTransform(nodeex->getId()));
+		}
+
+		g_context->IASetVertexBuffers(0, 1, &model.m_vb, &meshex.stride, &meshex.offset);
 		g_context->RSSetState(mtl.rasterizer);
 		setMaterial(mtl);
-		g_context->IASetPrimitiveTopology(vbregion.topology);
-		g_context->DrawIndexed(vbregion.icount, vbregion.ioffset, 0);
+		g_context->IASetPrimitiveTopology(meshex.topology);
+		g_context->DrawIndexed(meshex.icount, meshex.ioffset, 0);
 	}
-
-	// draw all children
+	
 	for (unsigned int n = 0; n < node->mNumChildren; ++n)
 	{
-		_renderNode(model, node->mChildren[n], m, animation, time);
+		_renderNode(model, node->mChildren[n], pose);
 	}
 }

@@ -16,5 +16,7 @@ namespace cbs
 	public:
 		D3D11Device(int width, int height);
 		~D3D11Device();
+
+		static void clear();
 	};
 }

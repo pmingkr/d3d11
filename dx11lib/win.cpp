@@ -43,12 +43,17 @@ Window::Window(int width, int height)
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	RegisterClassEx(&wcex);
 
-	int nWidth = GetSystemMetrics(SM_CXDLGFRAME) * 2 + width;
-	int nHeight = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CXDLGFRAME) * 2 + height;
-	int nX = (GetSystemMetrics(SM_CXSCREEN) - nWidth) / 2;
-	int nY = (GetSystemMetrics(SM_CYSCREEN) - nHeight) / 2;
+	int wndstyle = WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
-	g_hWnd = CreateWindow(wcex.lpszClassName, TEXT("Direct3D 11 Window"), WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, nX, nY, nWidth, nHeight, nullptr, nullptr, g_hInst, nullptr);
+	RECT rc = {0, 0, width, height};
+	AdjustWindowRect(&rc, wndstyle, false);
+
+	int adjwidth = rc.right - rc.left;
+	int adjheight = rc.bottom - rc.top;
+	int adjx = (GetSystemMetrics(SM_CXSCREEN) - adjwidth) / 2;
+	int adjy = (GetSystemMetrics(SM_CYSCREEN) - adjheight) / 2;
+
+	g_hWnd = CreateWindow(wcex.lpszClassName, TEXT("Direct3D 11 Window"), wndstyle, adjx, adjy, adjwidth, adjheight, nullptr, nullptr, g_hInst, nullptr);
 	if (g_hWnd == nullptr) throw WindowException();
 }
 Window::~Window()

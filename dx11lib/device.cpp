@@ -75,8 +75,8 @@ __succeeded:
 
 		D3D11_TEXTURE2D_DESC descDepth;
 		memset(&descDepth, 0, sizeof(descDepth));
-		descDepth.Width = width;
-		descDepth.Height = height;
+		descDepth.Width = rc.right;
+		descDepth.Height = rc.bottom;
 		descDepth.MipLevels = 1;
 		descDepth.ArraySize = 1;
 		descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -129,4 +129,11 @@ D3D11Device::~D3D11Device()
 #endif
 
 	g_device = nullptr;
+}
+void D3D11Device::clear()
+{
+	// 색 버퍼 지우기
+	float colors[4] = { 0,0,0,1 };
+	g_context->ClearRenderTargetView(g_rtv, colors);
+	g_context->ClearDepthStencilView(g_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 }

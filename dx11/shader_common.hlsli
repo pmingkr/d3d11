@@ -6,10 +6,3 @@ struct VSOutput
 	float4 color : COLOR0;
 	float2 texcoord : TEXCOORD0;
 };
-
-// 셰이더 상수 cbuffer
-cbuffer ConstBuffer : register(b0)
-{
-	float4 vColor;
-	matrix mWVP;
-}

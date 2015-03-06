@@ -19,13 +19,25 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="pshader.hlsl">
+    <FxCompile Include="ps_basic.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="vshader.hlsl">
+    <FxCompile Include="ps_notexture.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="vs_skinned.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
+    <FxCompile Include="vs_basic.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -33,14 +45,18 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="commonutil.h" />
+    <ClInclude Include="deltams.h" />
     <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="deltams.cpp" />
     <ClCompile Include="entry.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader_common.hlsli" />
+    <None Include="vs_common.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\dx11lib\dx11lib.vcxproj">
@@ -57,7 +73,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -70,7 +86,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -140,15 +156,9 @@
     <CustomBuildStep>
       <Message>%(Filename)</Message>
     </CustomBuildStep>
-    <FxCompile>
-      <VariableName>s_%(Filename)</VariableName>
-    </FxCompile>
-    <FxCompile>
-      <HeaderFileOutput>%(RelativeDir)%(Filename).h</HeaderFileOutput>
-    </FxCompile>
-    <FxCompile>
-      <ObjectFileOutput />
-    </FxCompile>
+    <FxCompile />
+    <FxCompile />
+    <FxCompile />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -162,11 +172,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <FxCompile>
-      <HeaderFileOutput>%(RelativeDir)%(Filename).h</HeaderFileOutput>
-      <VariableName>s_%(Filename)</VariableName>
-      <ObjectFileOutput />
-    </FxCompile>
+    <FxCompile />
     <CustomBuildStep>
       <Message>%(Filename)</Message>
     </CustomBuildStep>
@@ -207,11 +213,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
-    <FxCompile>
-      <HeaderFileOutput>%(RelativeDir)%(Filename).h</HeaderFileOutput>
-      <VariableName>s_%(Filename)</VariableName>
-      <ObjectFileOutput />
-    </FxCompile>
+    <FxCompile />
     <CustomBuildStep>
       <Message>%(Filename)</Message>
     </CustomBuildStep>

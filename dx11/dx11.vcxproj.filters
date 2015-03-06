@@ -12,18 +12,33 @@
     <Filter Include="셰이더">
       <UniqueIdentifier>{de745cab-66bc-45c8-a467-4e44ec0853f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="기타 도구">
+      <UniqueIdentifier>{aae7417f-5c00-4cc4-b984-e0f3866eb9a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="pshader.hlsl">
+    <FxCompile Include="vs_skinned.hlsl">
       <Filter>셰이더</Filter>
     </FxCompile>
-    <FxCompile Include="vshader.hlsl">
+    <FxCompile Include="vs_basic.hlsl">
+      <Filter>셰이더</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_basic.hlsl">
+      <Filter>셰이더</Filter>
+    </FxCompile>
+    <FxCompile Include="ps_notexture.hlsl">
       <Filter>셰이더</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="deltams.h">
+      <Filter>기타 도구</Filter>
+    </ClInclude>
+    <ClInclude Include="commonutil.h">
+      <Filter>기타 도구</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -33,9 +48,15 @@
     <ClCompile Include="entry.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="deltams.cpp">
+      <Filter>기타 도구</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader_common.hlsli">
+      <Filter>셰이더</Filter>
+    </None>
+    <None Include="vs_common.hlsli">
       <Filter>셰이더</Filter>
     </None>
   </ItemGroup>
