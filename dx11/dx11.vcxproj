@@ -19,30 +19,34 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="ps_basic.hlsl">
+    <CustomBuild Include="ps_basic.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="ps_notexture.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="ps_notexture.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="vs_skinned.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="vs_skinned.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-    </FxCompile>
-    <FxCompile Include="vs_basic.hlsl">
+      <FileType>Document</FileType>
+    </CustomBuild>
+    <CustomBuild Include="vs_basic.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-    </FxCompile>
+      <FileType>Document</FileType>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="commonutil.h" />
@@ -173,9 +177,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <FxCompile />
-    <CustomBuildStep>
-      <Message>%(Filename)</Message>
-    </CustomBuildStep>
+    <CustomBuildStep />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
