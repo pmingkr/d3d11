@@ -4,7 +4,7 @@
 //
 //
 //   fxc /T ps_4_0 /Fh ps_basic.h /Vn s_ps_basic /nologo
-//    D:\Projects\git\cbs\samples\dx11\dx11\ps_basic.hlsl
+//    C:\Users\Game00\Desktop\semi-d3d11\dx11\ps_basic.hlsl
 //
 //
 // Buffer Definitions: 

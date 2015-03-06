@@ -4,7 +4,7 @@
 //
 //
 //   fxc /T vs_4_0 /Fh vs_skinned.h /Vn s_vs_skinned /nologo
-//    D:\Projects\git\cbs\samples\dx11\dx11\vs_skinned.hlsl
+//    C:\Users\Game00\Desktop\semi-d3d11\dx11\vs_skinned.hlsl
 //
 //
 // Buffer Definitions: 

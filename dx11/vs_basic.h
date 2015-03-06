@@ -4,7 +4,7 @@
 //
 //
 //   fxc /T vs_4_0 /Fh vs_basic.h /Vn s_vs_basic /nologo
-//    D:\Projects\git\cbs\samples\dx11\dx11\vs_basic.hlsl
+//    C:\Users\Game00\Desktop\semi-d3d11\dx11\vs_basic.hlsl
 //
 //
 // Buffer Definitions: 
