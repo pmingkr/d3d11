@@ -11,11 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\cbs\commonutil.h" />
     <ClInclude Include="include\cbs\deltams.h" />
     <ClInclude Include="encoding.h" />
     <ClInclude Include="include\cbs\d3d11\assimp.h" />
-    <ClInclude Include="include\cbs\d3d11\autoutil.h" />
+    <ClInclude Include="include\cbs\autoutil.h" />
     <ClInclude Include="include\cbs\d3d11\buffer.h" />
     <ClInclude Include="include\cbs\d3d11\device.h" />
     <ClInclude Include="include\cbs\d3d11.h" />
@@ -65,10 +64,12 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Assimp.props" />
+    <Import Project="..\vs2010.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Assimp.props" />
+    <Import Project="..\vs2010.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

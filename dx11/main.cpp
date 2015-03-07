@@ -5,8 +5,6 @@
 #include "vs_basic.h"
 #include "vs_skinned.h"
 
-#include <sstream>
-
 using namespace std;
 using namespace cbs;
 
@@ -44,71 +42,10 @@ struct Vertex
 	XMFLOAT4 blendwgt;
 };
 
-Main * g_main;
-
-class 붕어빵
-{
-private:
-	const char * 붕어빵의_이름;
-	int 붕어빵_크기;
-	int 단팥의_양;
-
-public:
-	void 버리기()
-	{
-		붕어빵_크기 = 0;
-		단팥의_양 = 0;
-	}
-	void 먹기(int 먹는양)
-	{
-		붕어빵_크기 -= 먹는양;
-		단팥의_양 -= 먹는양/2;
-	}
-
-};
-
-class Model3D
-{
-private:
-
-public:
-	// 생성하기
-	void create(const char * name)
-	{
-	}
-
-	// 화면에_출력
-	void render(float x,float y)
-	{
-		
-	}
-};
-
-void main()
-{
-	붕어빵 붕어A;
-	붕어A.버리기();
-}
-
-Main::Main() :D3D11Device(800, 600)
+Main::Main(int width, int height) :D3D11Device(width, height)
 {		
-	g_main = this;
-
-	// 사각형 정점 버퍼 생성
-	static const float vertices[] =
-	{
-		-1, 1, 0,	0, 0,
-		1, 1, 0,	1, 0,
-		-1, -1, 0,	0, 1,
-		1, -1, 0,	1, 1
-	};
-	m_vbQuad = Buffer(D3D11_BIND_VERTEX_BUFFER, vertices);
-
-	// 셰이더 상수 생성
-	m_cb_vsCommon = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(CB_VSCommon));
-	m_cb_vsBasic = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(CB_VSBasic));
-	m_cb_psBasic = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(CB_PSBasic));
-	m_cb_vsSkinned = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(CB_VSSkinned));
+	m_width = width;
+	m_height = height;
 
 	// basic 정점 셰이더 & 정점 레이아웃
 	static const D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -129,28 +66,28 @@ Main::Main() :D3D11Device(800, 600)
 		{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(Vertex, blendwgt), D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 	m_vs_skinned = VertexShader(s_vs_skinned, layout_skinned);
+	
+	// 픽셀 셰이더
+	m_ps_basic = PixelShader(s_ps_basic);
+	m_ps_noTexture = PixelShader(s_ps_notexture);
 
-	m_ps_basic = PixelShader(s_ps_basic); // 픽셀 셰이더
-	m_ps_noTexture = PixelShader(s_ps_notexture); // 텍스처 없는 픽셀 셰이더
+	// 셰이더 상수 생성
+	m_cb_vsCommon = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(CB_VSCommon));
+	m_cb_vsBasic = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(CB_VSBasic));
+	m_cb_psBasic = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(CB_PSBasic));
+	m_cb_vsSkinned = Buffer(D3D11_BIND_CONSTANT_BUFFER, sizeof(CB_VSSkinned));
+	
 	m_sam = SamplerState(D3D11_TEXTURE_ADDRESS_WRAP, D3D11_FILTER_MIN_MAG_MIP_LINEAR); // 밉맵
 	m_depth = DepthStencilState(D3D11_COMPARISON_LESS, D3D11_DEPTH_WRITE_MASK_ALL); // 뎁스 스텐실 스테이트
-	//m_model = Model("models/Ogre/TheThing/Mesh.mesh.xml");
 
-	//m_dwarf = Model("models-nonbsd/Ogre/OgreSDK/fish.mesh.xml");
-	//m_dwarf = Model("models-nonbsd/MD5/Bob.md5mesh");
-	m_dwarf = Model("models-nonbsd/X/dwarf.x");
-	m_model = Model("res/tiny_4anim.x");
-	m_model.setAnimationTPS(4800.0);
-
-	m_modelTime = 0;
-	m_dwarfTime = 0;
 }
 Main::~Main()
 {
 }
+
 void Main::loop()
 {
-	float delta = (float)m_delta.measureDelta();
+	m_delta = (float)m_deltaMeasure.measureDelta(); // 시간 변화량 측정
 
 	clear(); // 화면 초기화
 
@@ -167,56 +104,19 @@ void Main::loop()
 	// 뷰/프로젝션 행렬 설정
 	{
 		XMMATRIX mVP = XMMatrixLookAtLH(vec(-1000.f, 0, 0), vec(0, 0, 0), vec(0, 0, -1));
-		mVP *= XMMatrixPerspectiveFovLH(XM_PI/3, 800/600.f, 50.f, 10000.f);
+		mVP *= XMMatrixPerspectiveFovLH(XM_PI/3, (float)m_width/m_height, 50.f, 10000.f);
 		
 		CB_VSCommon sc;
 		sc.mVP = XMMatrixTranspose(mVP);
 		g_context->UpdateSubresource(m_cb_vsCommon, 0, nullptr, &sc, 0, 0);
 	}
-	aiMatrix4x4 mTmp;
-	aiMatrix4x4 mRes;
-	mRes = aiMatrix4x4::Translation(aiVector3D(200.f, 0.f, 200.f), mTmp);
-	mRes *= aiMatrix4x4::RotationZ(GetTickCount() / 800.f, mTmp);
-	drawModel(delta, &m_model, &m_modelTime, mRes); // tiny rendering
 
-	// 180 = XM_PI
-	// 90 = XM_PI/2
-	// -90 = -XM_PI/2
+	myLoop();
 
-	mRes = aiMatrix4x4::Translation(aiVector3D(500.f, 0.f, 200.f), mTmp);
-	mRes *= aiMatrix4x4::RotationZ(GetTickCount() / 800.f, mTmp);
-	mRes *= aiMatrix4x4::Scaling(aiVector3D(10.f, 10.f, 10.f), mTmp);
-	drawModel(delta, &m_dwarf, &m_dwarfTime, mRes); // dwarf rendering
-
-		// 렌더링
-		render(m_model, pose);
-	}
-
-	// 드워프 렌더링
-	{
-		// 애니메이션 재생
-		Model::Pose pose;
-		Model::AnimationStatus status;
-		status.animation = m_dwarf.getAnimation(0); // 애니메이션 가져오기
-		status.time = m_dwarfTime + delta; // 애니메이션 시간 이동
-		pose.set(&status); // 포즈 가져오기
-		m_dwarfTime = status.time; // 애니메이션 시간 보정
-
-		// 월드 행렬 설정
-		aiMatrix4x4 mRes;
-		mRes = aiMatrix4x4::Translation(vec(0, 300.f, 200.f), mTmp);
-		mRes *= aiMatrix4x4::Scaling(vec(8.f), mTmp);
-		mRes *= aiMatrix4x4::RotationZ(GetTickCount() / 800.f, mTmp);
-		mRes *= aiMatrix4x4::RotationX(XM_PI * -0.5f, mTmp);
-		pose.transform(mRes);
-
-		// 렌더링
-		render(m_dwarf, pose);
-	}
-	
-	// 프레젠트
+	// 결과 출력
 	g_chain->Present(1, 0);
 }
+
 void Main::setMaterial(const cbs::Material & mtl)
 {
 	ID3D11ShaderResourceView * srv[Material::MAX_TEXTURE];
@@ -265,25 +165,17 @@ void Main::setBoneWorlds(const Matrix4x3 * matrix, size_t m4x3count)
 	g_context->UpdateSubresource(m_cb_vsSkinned, 0, nullptr, &sc, 0, 0);
 }
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
+float Main::getDelta()
 {
-	cbs::g_hInst = hInstance;
-	try
-	{
-		Main main;
-		return main.messageLoop(); // 메세지 루프
-	}
-	catch (cbs::DXException & ex)
-	{
-		wstringstream ss;
-		ss << ex.filename << L'(' << dec << ex.line << L"): 오류가 낫소. (오류코드: 0x" << hex << ex.hr << L')' << endl;
-		OutputDebugString(ss.str().c_str());
-
-		ss.str(L"");
-		ss << L"오류가 났소. \r\n오류코드: 0x" << hex << ex.hr;
-		MessageBox(nullptr, ss.str().c_str(), nullptr, MB_OK | MB_ICONERROR);
-		return (int)ex.hr;
-	}
+	return m_delta;
+}
+int Main::getWidth()
+{
+	return m_width;
+}
+int Main::getHeight()
+{
+	return m_height;
 }
 
 #pragma region 메모리 누수 감지
@@ -303,27 +195,4 @@ struct __StaticRun
 	}
 } __staticRun;
 
-#pragma endregionvoid Main::drawModel(float delta, cbs::Model * model, double * time, aiMatrix4x4 matrix)
-{
-	// 타이니 렌더링
-	{
-		//Object a;
-		//Object * b;
-		// a.function();
-		// b->function();
-
-		// 애니메이션 재생
-		Model::Pose pose;
-		Model::AnimationStatus status;
-		status.animation = model->getAnimation(0); // 애니메이션 가져오기
-		status.time = *time + delta; // 애니메이션 시간 이동
-		pose.set(&status); // 포즈 가져오기
-		*time = status.time; // 애니메이션 시간 보정
-
-		// 월드 행렬 설정
-		pose.transform(matrix);
-
-		// 렌더링
-		render(*model, pose);
-	}	
-}
+#pragma endregion

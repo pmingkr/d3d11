@@ -17,7 +17,7 @@
 #pragma warning(pop)
 
 #include <stdexcept>
-#include "autoutil.h"
+#include "../autoutil.h"
 
 namespace cbs
 {

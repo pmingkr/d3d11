@@ -20,8 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="encoding.h" />
+    <ClInclude Include="include\cbs\autoutil.h" />
     <ClInclude Include="include\cbs\d3d11\assimp.h" />
-    <ClInclude Include="include\cbs\d3d11\autoutil.h" />
     <ClInclude Include="include\cbs\d3d11\buffer.h" />
     <ClInclude Include="include\cbs\d3d11\device.h" />
     <ClInclude Include="include\cbs\d3d11.h" />

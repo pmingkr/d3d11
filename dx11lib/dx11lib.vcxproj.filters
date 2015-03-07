@@ -1,16 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="헤더 파일">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="소스 파일">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
     <Filter Include="WIC 텍스처 로더">
       <UniqueIdentifier>{5d3f7b15-33bd-4fe6-a78c-02b0baf0e371}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3d">
+      <UniqueIdentifier>{2387a0e9-2f45-481c-98b6-4d8d72cdb287}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{cfb0ff80-e781-446d-a018-3021af1815ae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -18,78 +16,78 @@
       <Filter>WIC 텍스처 로더</Filter>
     </ClInclude>
     <ClInclude Include="include\cbs\d3d11\assimp.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cbs\d3d11\autoutil.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>3d</Filter>
     </ClInclude>
     <ClInclude Include="include\cbs\d3d11\buffer.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>3d</Filter>
     </ClInclude>
     <ClInclude Include="include\cbs\d3d11\common.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cbs\d3d11\device.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cbs\d3d11\shader.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cbs\d3d11\state.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cbs\d3d11\texture.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="include\cbs\d3d11\win.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>3d</Filter>
     </ClInclude>
     <ClInclude Include="include\cbs\d3d11.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\device.h">
+      <Filter>3d</Filter>
     </ClInclude>
     <ClInclude Include="encoding.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\shader.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\state.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\texture.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\win.h">
+      <Filter>3d</Filter>
     </ClInclude>
     <ClInclude Include="include\cbs\deltams.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\autoutil.h">
+      <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="win.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="buffer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="shader.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="device.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="common.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="texture.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="WICTextureLoader\WICTextureLoader.cpp">
       <Filter>WIC 텍스처 로더</Filter>
     </ClCompile>
     <ClCompile Include="assimp.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>3d</Filter>
     </ClCompile>
-    <ClCompile Include="state.cpp">
-      <Filter>소스 파일</Filter>
+    <ClCompile Include="buffer.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="common.cpp">
+      <Filter>3d</Filter>
     </ClCompile>
     <ClCompile Include="d3d11.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="device.cpp">
+      <Filter>3d</Filter>
     </ClCompile>
     <ClCompile Include="encoding.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="shader.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="state.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>3d</Filter>
+    </ClCompile>
+    <ClCompile Include="win.cpp">
+      <Filter>3d</Filter>
     </ClCompile>
     <ClCompile Include="deltams.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

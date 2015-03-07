@@ -10,6 +10,8 @@
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+[Dd]ebug_vs2010/
+[Rr]elease_vs2010/
 x64/
 build/
 bld/

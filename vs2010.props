@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)$(Configuration)_vs2010\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntDir>$(Configuration)_vs2010\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <CustomBuild>
+      <Command>set name=%(Filename)
+fxc /T %name:~0,2%_4_0 /Fh "%(RelativeDir)%(Filename).h"  /Vn "s_%(Filename)" /nologo "%(FullPath)"</Command>
+    </CustomBuild>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <CustomBuild>
+      <Message>%(Filename)%(Extension)</Message>
+    </CustomBuild>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <CustomBuild>
+      <Outputs>%(RelativeDir)%(Filename).h</Outputs>
+    </CustomBuild>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
