@@ -34,8 +34,11 @@ cbs::TextureData::TextureData(const wchar_t * filename)
 	m_reference = 0;
 	
 #if _MSC_VER >= 1700
-	HRESULT hr = DirectX::CreateWICTextureFromFile(g_device, filename, nullptr, &m_ptr);
+	HRESULT hr = DirectX::CreateWICTextureFromFile(g_device, g_context, filename, nullptr, &m_ptr);
 #else
+	D3DX11_IMAGE_LOAD_INFO ili;
+	ili.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	ili.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(g_device, filename, nullptr, nullptr, &m_ptr, nullptr);
 #endif
 	if (SUCCEEDED(hr)) return;

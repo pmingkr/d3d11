@@ -10,10 +10,10 @@ using namespace std;
 using namespace cbs;
 
 DXException::DXException(HRESULT hr)
-	:hr(hr), filename(nullptr), line(0)
+	:hr(hr), lineText(nullptr), filename(nullptr), line(0)
 {
 }
-DXException::DXException(HRESULT hr, const wchar_t * filename, int line)
-	:hr(hr), filename(filename), line(line)
+DXException::DXException(HRESULT hr, const wchar_t * lineText, const wchar_t * filename, int line)
+	:hr(hr), lineText(lineText), filename(filename), line(line)
 {
 }

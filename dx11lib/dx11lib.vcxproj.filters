@@ -51,6 +51,9 @@
     <ClInclude Include="include\cbs\autoutil.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="include\cbs\alignedarray.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WICTextureLoader\WICTextureLoader.cpp">

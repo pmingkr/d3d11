@@ -42,7 +42,7 @@ struct Vertex
 	XMFLOAT4 blendwgt;
 };
 
-Main::Main(int width, int height) :D3D11Device(width, height)
+Main::Main(int width, int height) :D3D11Device(width, height, 4)
 {		
 	m_width = width;
 	m_height = height;
@@ -101,22 +101,18 @@ void Main::loop()
 	g_context->VSSetConstantBuffers(0, 1, &m_cb_vsCommon);
 	g_context->PSSetConstantBuffers(0, 1, &m_cb_psBasic);
 
-	// 뷰/프로젝션 행렬 설정
-	{
-		XMMATRIX mVP = XMMatrixLookAtLH(vec(-1000.f, 0, 0), vec(0, 0, 0), vec(0, 0, -1));
-		mVP *= XMMatrixPerspectiveFovLH(XM_PI/3, (float)m_width/m_height, 50.f, 10000.f);
-		
-		CB_VSCommon sc;
-		sc.mVP = XMMatrixTranspose(mVP);
-		g_context->UpdateSubresource(m_cb_vsCommon, 0, nullptr, &sc, 0, 0);
-	}
-
 	myLoop();
 
 	// 결과 출력
 	g_chain->Present(1, 0);
 }
 
+void Main::setViewProjection(const XMMATRIX & matrix)
+{
+	CB_VSCommon sc;
+	sc.mVP = XMMatrixTranspose(matrix);
+	g_context->UpdateSubresource(m_cb_vsCommon, 0, nullptr, &sc, 0, 0);
+}
 void Main::setMaterial(const cbs::Material & mtl)
 {
 	ID3D11ShaderResourceView * srv[Material::MAX_TEXTURE];
@@ -142,7 +138,7 @@ void Main::setMaterial(const cbs::Material & mtl)
 	sc.vColor = XMFLOAT4(0.5f, 0.5f, 0.5f, 1);
 	g_context->UpdateSubresource(m_cb_psBasic, 0, nullptr, &sc, 0, 0);
 }
-void Main::setWorld(const aiMatrix4x4 & matrix)
+void Main::setWorld(const XMMATRIX & matrix)
 {
 	// 버텍스 셰이더 설정
 	g_context->VSSetShader(m_vs_basic, nullptr, 0);
@@ -150,7 +146,7 @@ void Main::setWorld(const aiMatrix4x4 & matrix)
 	g_context->IASetInputLayout(m_vs_basic.getInputLayer());
 
 	CB_VSBasic sc;
-	memcpy(&sc.mWorlds, &matrix, sizeof(XMMATRIX));
+	sc.mWorlds = matrix;
 	g_context->UpdateSubresource(m_cb_vsBasic, 0, nullptr, &sc, 0, 0);
 }
 void Main::setBoneWorlds(const Matrix4x3 * matrix, size_t m4x3count)

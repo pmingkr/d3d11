@@ -4,6 +4,7 @@
 #include "buffer.h"
 #include "texture.h"
 #include "state.h"
+#include "../alignedarray.h"
 
 #include <vector>
 
@@ -31,6 +32,10 @@ namespace cbs
 		float _11, _21, _31, _41;
 		float _12, _22, _32, _42;
 		float _13, _23, _33, _43;
+
+		Matrix4x3();
+		Matrix4x3(const aiMatrix4x4& m);
+		Matrix4x3(const XMMATRIX& m);
 	};
 
 	struct Material
@@ -99,22 +104,68 @@ namespace cbs
 			void clear();
 
 			// 특정 노드의 행렬을 변경합니다.
+			// Row-Based 행렬
+			void setNodeTransform(size_t idx, const XMMATRIX& m);
+
+			// 특정 노드의 행렬을 변경합니다.
+			// Row-Based 행렬
 			void setNodeTransform(size_t idx, const aiMatrix4x4& m);
 
 			// 특정 노드의 행렬을 가져옵니다.
-			const aiMatrix4x4& getNodeTransform(size_t idx) const;
+			// Row-Based 행렬
+			const XMMATRIX& getNodeTransform(size_t idx) const;
+
+			// 해당 행렬로 모델의 포즈를 변형시킵니다.
+			void transform(const XMMATRIX& m);
 
 			// 해당 행렬로 모델의 포즈를 변형시킵니다.
 			void transform(const aiMatrix4x4& m);
-
+			
 			// 애니메이션에서 포즈 가져오기
 			bool set(AnimationStatus* status);
+			
+			// 행렬 상수 배
+			const Pose operator * (float weight) const;
+
+			// 행렬 상수 배
+			Pose& operator *= (float weight);
+
+			// 행렬 덧셈
+			const Pose operator + (const Pose & other) const;
+
+			// 행렬 덧셈
+			Pose& operator += (const Pose & other);
+			
+			// 해당 행렬 곱셈
+			const Pose operator * (const XMMATRIX& m) const;
+
+			// 해당 행렬 곱셈
+			Pose& operator *= (const XMMATRIX& m);
+
+			// 해당 행렬 곱셈
+			const Pose operator * (const aiMatrix4x4& m) const;
+
+			// 해당 행렬 곱셈
+			Pose& operator *= (const aiMatrix4x4& m);
+
+			// 행렬 상수 배
+			friend inline const Pose operator * (float weight, const Pose & other)
+			{
+				return other * weight;
+			}
+
+			// 행렬 행렬 곱셈
+			friend inline const Pose operator * (const XMMATRIX& m, const Pose & other)
+			{
+				Pose pose = other;
+				pose.transform(m);
+				return pose;
+			}
 			
 		private:
 			void _resize(size_t size);
 
-			AutoDeleteArray<aiMatrix4x4> m_nodeTransform;
-			size_t m_nodeCount;
+			AlignedArray<XMMATRIX, sizeof(__m128)> m_transforms;
 		};
 
 		// 애니메이션 정보
@@ -182,7 +233,7 @@ namespace cbs
 		void _makeTexture(const char * strName);
 		void _makeBuffer();
 		template <typename LAMBDA> void _callEachNode(aiNode * node, LAMBDA &lambda);
-
+		
 		struct MeshExtra
 		{
 			UINT stride;
@@ -208,15 +259,25 @@ namespace cbs
 		// 애니메이션 없이 렌더링
 		void render(const Model & model, const aiMatrix4x4 & world);
 
+		// 애니메이션 없이 렌더링
+		void render(const Model & model, const XMMATRIX & world);
+
 		// 해당 포즈로 렌더링
 		void render(const Model & model, const Model::Pose & pose);
 
+		// 렌더러가 렌더링시 사용할 제질을 받아온다.
 		virtual void setMaterial(const Material & mtl) = 0;
-		virtual void setWorld(const aiMatrix4x4 & matrix) = 0;
+
+		// 렌더러가 렌더링시 사용할 행렬을 받아온다.
+		// Row-Based 행렬
+		virtual void setWorld(const XMMATRIX & matrix) = 0;
+
+		// 렌더러가 렌더링시 사용할 행렬 목록을 받아온다.
+		// 4x3 Row-Based 행렬
 		virtual void setBoneWorlds(const Matrix4x3 * matrix, size_t m4x3count) = 0;
 
 	private:
-		void _renderNode(const Model & model, aiNode * node, const aiMatrix4x4 & mParent);
+		void _renderNode(const Model & model, aiNode * node, const XMMATRIX & mParent);
 		void _renderNode(const Model & model, aiNode * node, const Model::Pose & pose);
 
 	};

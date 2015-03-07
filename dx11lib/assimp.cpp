@@ -79,15 +79,14 @@ namespace
 			}
 		}
 
-		void _getAnimation(aiNode * node, const aiMatrix4x4 & mParent)
+		void _getAnimation(aiNode * node, const XMMATRIX & mParent)
 		{
 			cbs::Model::NodeExtra* nodeex = (cbs::Model::NodeExtra*)node->mAttachment;
 
-			aiMatrix4x4 m = mParent;
+			XMMATRIX m = mParent;
 
 			if (nodeex != nullptr)
 			{
-				//m *= node->mTransformation;
 				aiNodeAnim * anim = nodeex->getAnimation(m_index);
 				if (anim != nullptr)
 				{
@@ -95,16 +94,23 @@ namespace
 					aiQuaternion quat = interpolateKey<aiQuaternion>(anim->mRotationKeys, anim->mNumRotationKeys, anim->mPreState, anim->mPostState);
 					aiVector3D scale = interpolateKey<aiVector3D>(anim->mScalingKeys, anim->mNumScalingKeys, anim->mPreState, anim->mPostState);
 
-					aiMatrix4x4 m2;
-					m *= aiMatrix4x4::Translation(pos, m2);
-					m *= aiMatrix4x4(quat.GetMatrix());
-					m *= aiMatrix4x4::Scaling(scale, m2);
+					XMVECTOR xmquat;
+					xmquat.m128_f32[0] = quat.x;
+					xmquat.m128_f32[1] = quat.y;
+					xmquat.m128_f32[2] = quat.z;
+					xmquat.m128_f32[3] = quat.w;
+					
+					m *= XMMatrixTranspose(XMMatrixTranslation(pos.x, pos.y, pos.z));
+					m *= XMMatrixTranspose(XMMatrixRotationQuaternion(xmquat));
+					m *= XMMatrixScaling(scale.x, scale.y, scale.z);
 				}
 				m_pose->setNodeTransform(nodeex->getId(), m);
 			}
 			else
 			{
-				m *= node->mTransformation;
+				XMMATRIX tm;
+				(aiMatrix4x4&)tm = node->mTransformation;
+				m *= tm;
 			}
 
 			for (unsigned int n = 0; n < node->mNumChildren; ++n)
@@ -115,6 +121,18 @@ namespace
 	};
 
 	const double DEFAULT_TICK_PER_SECOND = 10.0;
+}
+
+cbs::Matrix4x3::Matrix4x3()
+{
+}
+cbs::Matrix4x3::Matrix4x3(const aiMatrix4x4& m)
+{
+	memcpy(this, &m, sizeof(Matrix4x3));
+}
+cbs::Matrix4x3::Matrix4x3(const XMMATRIX& m)
+{
+	memcpy(this, &m, sizeof(Matrix4x3));
 }
 
 cbs::Assimp::Assimp()
@@ -137,28 +155,17 @@ cbs::Assimp::~Assimp()
 
 cbs::Model::Pose::Pose()
 {
-	m_nodeCount = 0;
 }
 cbs::Model::Pose::~Pose()
 {
 }
 cbs::Model::Pose::Pose(const Pose& _copy)
 {
-	m_nodeCount = _copy.m_nodeCount;
-	if (m_nodeCount != 0)
-	{
-		m_nodeTransform.allocate(m_nodeCount);
-		memcpy(m_nodeTransform, _copy.m_nodeTransform, sizeof(aiMatrix4x4) * m_nodeCount);
-	}
-	else
-	{
-		m_nodeTransform = nullptr;
-	}
+	m_transforms = _copy.m_transforms;
 }
 cbs::Model::Pose::Pose(Pose&& _move)
 {
-	m_nodeCount = _move.m_nodeCount;
-	m_nodeTransform = std::move(_move.m_nodeTransform);
+	m_transforms = std::move(_move.m_transforms);
 }
 cbs::Model::Pose& cbs::Model::Pose::operator =(const Pose& _copy)
 {
@@ -174,25 +181,40 @@ cbs::Model::Pose& cbs::Model::Pose::operator =(Pose&& _move)
 }
 void cbs::Model::Pose::clear()
 {
-	m_nodeCount = 0;
-	m_nodeTransform = nullptr;
+	m_transforms.remove();
+}
+void cbs::Model::Pose::setNodeTransform(size_t idx, const XMMATRIX& m)
+{
+	assert(idx < m_transforms.size());
+	m_transforms[idx] = m;
 }
 void cbs::Model::Pose::setNodeTransform(size_t idx, const aiMatrix4x4& m)
 {
-	assert(m_nodeTransform != nullptr);
-	m_nodeTransform[idx] = m;
+	assert(idx < m_transforms.size());
+	(aiMatrix4x4&)m_transforms[idx] = m;
 }
-const aiMatrix4x4& cbs::Model::Pose::getNodeTransform(size_t idx) const
+const XMMATRIX& cbs::Model::Pose::getNodeTransform(size_t idx) const
 {
-	assert(m_nodeTransform != nullptr);
-	return m_nodeTransform[idx];
+	assert(idx < m_transforms.size());
+	return m_transforms[idx];
+}
+void cbs::Model::Pose::transform(const XMMATRIX& m)
+{
+	XMMATRIX tm = XMMatrixTranspose(m);
+	for (size_t i = 0; i < m_transforms.size(); i++)
+	{
+		XMMATRIX& dest = m_transforms[i];
+		dest = tm * dest;
+	}
 }
 void cbs::Model::Pose::transform(const aiMatrix4x4& m)
 {
-	for (size_t i = 0; i < m_nodeCount; i++)
+	XMMATRIX nm;
+	(aiMatrix4x4&)nm = m;
+	for (size_t i = 0; i < m_transforms.size(); i++)
 	{
-		aiMatrix4x4& nodem = m_nodeTransform[i];
-		nodem = m * nodem;
+		XMMATRIX& dest = m_transforms[i];
+		dest = nm * dest;
 	}
 }
 bool cbs::Model::Pose::set(AnimationStatus* status)
@@ -219,16 +241,81 @@ bool cbs::Model::Pose::set(AnimationStatus* status)
 	reader.m_duration = tps * status->animation->m_duration;
 
 	_resize(status->animation->m_nodeCount);
-	reader._getAnimation(status->animation->m_root, aiMatrix4x4());
+
+	reader._getAnimation(status->animation->m_root, XMMatrixIdentity());
 	status->time = time;
 	return true;
 }
 void cbs::Model::Pose::_resize(size_t size)
 {
-	if(m_nodeCount >= size) return;
+	m_transforms.resizeWithoutKeep(size);
+}
+const cbs::Model::Pose cbs::Model::Pose::operator * (float weight) const
+{
+	cbs::Model::Pose npose = *this;
+	npose *= weight;
+	return npose;
+}
+cbs::Model::Pose& cbs::Model::Pose::operator *= (float weight)
+{
+	XMVECTOR * dst = (XMVECTOR*)m_transforms.data();
+	XMVECTOR * end = dst + m_transforms.size() * (sizeof(XMMATRIX) / sizeof(XMVECTOR));
+	while (dst != end)
+	{
+		*dst = XMVectorScale(*dst, weight);
+		dst ++;
+	}
+	return *this;
+}
+const cbs::Model::Pose cbs::Model::Pose::operator + (const Pose & other) const
+{
+	cbs::Model::Pose npose = *this;
+	npose += other;
+	return npose;
+}
+cbs::Model::Pose& cbs::Model::Pose::operator += (const Pose & other)
+{
+	assert(m_transforms.size() == other.m_transforms.size());
 
-	m_nodeTransform.allocate(size);
-	m_nodeCount = size;
+	XMVECTOR * dst = (XMVECTOR*)m_transforms.data();
+	XMVECTOR * end = dst + m_transforms.size() * (sizeof(XMMATRIX) / sizeof(XMVECTOR));
+	const XMVECTOR * src = (XMVECTOR*)other.m_transforms.data();
+
+	while (dst != end)
+	{
+		*dst = XMVectorAdd(*dst, *src);
+		dst++;
+		src++;
+	}
+	return *this;
+}
+const cbs::Model::Pose cbs::Model::Pose::operator * (const XMMATRIX& m) const
+{
+	Pose tmp = *this;
+	return tmp *= m;
+}
+cbs::Model::Pose& cbs::Model::Pose::operator *= (const XMMATRIX& m)
+{
+	XMMATRIX * dst = m_transforms.data();
+	XMMATRIX * end = dst + m_transforms.size();
+
+	while (dst != end)
+	{
+		*dst *= m;
+	}
+	return *this;
+}
+const cbs::Model::Pose cbs::Model::Pose::operator * (const aiMatrix4x4& m) const
+{
+	XMMATRIX tm;
+	(aiMatrix4x4&)tm = m;
+	return *this * tm;
+}
+cbs::Model::Pose& cbs::Model::Pose::operator *= (const aiMatrix4x4& m)
+{
+	XMMATRIX tm;
+	(aiMatrix4x4&)tm = m;
+	return *this *= tm;
 }
 
 cbs::Model::NodeExtra::NodeExtra(size_t id)
@@ -393,7 +480,7 @@ void cbs::Model::_makeTexture(const char * strName)
 		mtl.ambient = aiColor4D(0.2f, 0.2f, 0.2f, 1.f);
 		mtl.emissive = aiColor4D(0.f, 0.f, 0.f, 0.f);
 		mtl.shininess = 0.f;
-		mtl.rasterizer = RasterizerState(D3D11_CULL_BACK, D3D11_FILL_SOLID);
+		mtl.rasterizer = RasterizerState(D3D11_CULL_BACK, D3D11_FILL_SOLID, true);
 	}
 	else
 	{
@@ -478,7 +565,7 @@ void cbs::Model::_makeTexture(const char * strName)
 				}
 			}
 
-			mtld.rasterizer = RasterizerState(cullmode, fillmode);
+			mtld.rasterizer = RasterizerState(cullmode, fillmode, true);
 		}
 	}
 
@@ -755,16 +842,27 @@ void cbs::Model::_callEachNode(aiNode * node, LAMBDA &lambda)
 void cbs::ModelRenderer::render(const Model & model, const aiMatrix4x4 & world)
 {
 	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
-	_renderNode(model, model.m_scene->mRootNode, world);
+
+	XMMATRIX m;
+	(aiMatrix4x4&)m = world;
+	_renderNode(model, model.m_scene->mRootNode, m);
+}
+void cbs::ModelRenderer::render(const Model & model, const XMMATRIX & world)
+{
+	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
+	_renderNode(model, model.m_scene->mRootNode, XMMatrixTranspose(world));
 }
 void cbs::ModelRenderer::render(const Model & model, const Model::Pose & pose)
 {
 	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
 	_renderNode(model, model.m_scene->mRootNode, pose);
 }
-void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const aiMatrix4x4 & mParent)
+void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const XMMATRIX & mParent)
 {
-	aiMatrix4x4 m = mParent * node->mTransformation;
+	XMMATRIX transform;
+	(aiMatrix4x4&)transform = node->mTransformation;
+
+	XMMATRIX m = mParent * transform;
 
 	if(node->mNumMeshes != 0)
 	{
@@ -805,14 +903,20 @@ void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const M
 			if (mesh->mNumBones == 1)
 			{
 				unsigned int nodeId = meshex.boneToNode[0];
-				setWorld(pose.getNodeTransform(nodeId) *mesh->mBones[0]->mOffsetMatrix);
+
+				XMMATRIX offsetm;
+				(aiMatrix4x4&)offsetm = mesh->mBones[0]->mOffsetMatrix;
+				setWorld(pose.m_transforms[nodeId] * offsetm);
 			}
 			else
 			{
 				for (unsigned int bi = 0; bi < mesh->mNumBones; bi++)
 				{
 					unsigned int nodeId = meshex.boneToNode[bi];
-					bones[bi] = (Matrix4x3&)(pose.m_nodeTransform[nodeId] * mesh->mBones[bi]->mOffsetMatrix);
+
+					XMMATRIX offsetm;
+					(aiMatrix4x4&)offsetm = mesh->mBones[bi]->mOffsetMatrix;
+					bones[bi] = pose.m_transforms[nodeId] * offsetm;
 				}
 				setBoneWorlds(bones, mesh->mNumBones);
 			}
@@ -820,7 +924,7 @@ void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const M
 		else
 		{
 			assert(nodeex != nullptr);
-			setWorld(pose.getNodeTransform(nodeex->getId()));
+			setWorld(pose.m_transforms[nodeex->getId()]);
 		}
 
 		g_context->IASetVertexBuffers(0, 1, &model.m_vb, &meshex.stride, &meshex.offset);

@@ -14,7 +14,7 @@ namespace cbs
 	class D3D11Device :public Window
 	{
 	public:
-		D3D11Device(int width, int height);
+		D3D11Device(int width, int height, int multiSampling = 1);
 		~D3D11Device();
 
 		static void clear();

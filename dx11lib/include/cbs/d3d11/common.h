@@ -28,9 +28,10 @@ namespace cbs
 	{
 	public:
 		DXException(HRESULT hr);
-		DXException(HRESULT hr, const wchar_t * filename, int line);
+		DXException(HRESULT hr, const wchar_t * lineText, const wchar_t * filename, int line);
 
 		const HRESULT hr;
+		const wchar_t * const lineText;
 		const wchar_t * const filename;
 		const int line;
 	};
@@ -66,7 +67,7 @@ namespace cbs
 	};
 }
 
-#define __UNWRAP2(x) L##x
-#define __UNWRAP(x) __UNWRAP2(x)
+#define __WIDE2(x) L##x
+#define __WIDE(x) __WIDE2(x)
 
-#define throwhr(cmd)	{HRESULT __hr; if(FAILED(__hr = (cmd))) throw DXException(__hr, __UNWRAP(__FILE__), __LINE__); }
+#define throwhr(cmd)	{HRESULT __hr; if(FAILED(__hr = (cmd))) throw DXException(__hr, __WIDE(#cmd), __WIDE(__FILE__), __LINE__); }

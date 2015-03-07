@@ -13,14 +13,15 @@ MyMain::MyMain()
 
 	m_rotation = 0.f;
 
-	//m_tiny = Model("models/Ogre/TheThing/Mesh.mesh.xml");
 	m_tiny = Model("res/tiny_4anim.x");
 	m_tiny.setAnimationTPS(4800.0);
 	m_tinyTime = 0;
 
-	//m_dwarf = Model("models-nonbsd/MD5/Bob.md5mesh");
 	m_dwarf = Model("models-nonbsd/X/dwarf.x");
 	m_dwarfTime = 0;
+
+	m_bob = Model("models-nonbsd/MD5/Bob.md5mesh");
+	m_bobTime = 0;
 	
 	m_fish = Model("models-nonbsd/Ogre/OgreSDK/fish.mesh.xml");
 	m_fishTime = 0;
@@ -28,40 +29,51 @@ MyMain::MyMain()
 
 void MyMain::myLoop()
 {
-	aiMatrix4x4 mTmp;
-	aiMatrix4x4 mRes;
-	aiMatrix4x4 mCommon;
+	// 카메라 행렬 설정
+	{
+		XMMATRIX mVP = XMMatrixLookAtLH(vec(-800.f, 0.f, -400.f), vec(0, 0, 0), vec(0, 0, -1));
+		mVP *= XMMatrixPerspectiveFovLH(XM_PI / 3, (float)getWidth() / getHeight(), 50.f, 10000.f);
+		setViewProjection(mVP);
+	}
+
+	XMMATRIX mRes;
 
 	m_rotation += getDelta() * XM_PI*2.f / 10.f;
-	
-	mCommon *= aiMatrix4x4::RotationY(XM_PI / 5, mTmp);
-	mCommon *= aiMatrix4x4::RotationZ(m_rotation, mTmp);
-
+	XMMATRIX mCommon = XMMatrixRotationZ(m_rotation);
+	 
 	// 타이니 렌더링
-	mRes = aiMatrix4x4::Translation(vec(0.f, 300.f, 200.f), mTmp);
-	mRes *= mCommon;
+	mRes = mCommon;
+	mRes *= XMMatrixTranslation(0.f, 450.f, 200.f);
 	drawModel(&m_tiny, &m_tinyTime, mRes);
 
-	// 드워프 렌더링
-	mRes = aiMatrix4x4::Translation(vec(0.f, -300.f, 200.f), mTmp);
+	// 밥 렌더링
+	mRes = XMMatrixScaling(8.f, 8.f, 8.f);
+	mRes *= XMMatrixRotationX(XM_PI);
 	mRes *= mCommon;
-	mRes *= aiMatrix4x4::RotationX(-XM_PI / 2, mTmp);
-	mRes *= aiMatrix4x4::Scaling(vec(8.f), mTmp);
+	mRes *= XMMatrixTranslation(0.f, 150.f, 200.f);
+	drawModel(&m_bob, &m_bobTime, mRes);
+
+	// 드워프 렌더링
+	mRes = XMMatrixScaling(8.f, 8.f, 8.f);
+	mRes *= XMMatrixRotationX(-XM_PI / 2);
+	mRes *= mCommon;
+	mRes *= XMMatrixTranslation(0.f, -150.f, 200.f);
 	drawModel(&m_dwarf, &m_dwarfTime, mRes);
 
 	// 물고기 렌더링
-	mRes = aiMatrix4x4::Translation(vec(0.f, 0.f, 200.f), mTmp);
-	mRes *= aiMatrix4x4::Scaling(vec(30.f), mTmp);
+	mRes = XMMatrixScaling(30.f, 30.f, 30.f);
+	mRes *= XMMatrixRotationX(-XM_PI / 2);
 	mRes *= mCommon;
-	mRes *= aiMatrix4x4::RotationX(-XM_PI / 2, mTmp);
+	mRes *= XMMatrixTranslation(0.f, -450.f, 200.f);
 	drawModel(&m_fish, &m_fishTime, mRes);
 }
 
-void MyMain::drawModel(cbs::Model * model, double * time, aiMatrix4x4 matrix)
+void MyMain::drawModel(cbs::Model * model, double * time, const XMMATRIX& matrix)
 {
 	// 애니메이션 재생
 	Model::Pose pose;
 	Model::AnimationStatus status;
+	
 	status.animation = model->getAnimation(0); // 애니메이션 가져오기
 	status.time = *time + getDelta(); // 애니메이션 시간 이동
 	pose.set(&status); // 포즈 가져오기
@@ -85,7 +97,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
 		OutputDebugString(ss.str().c_str());
 
 		ss.str(L"");
-		ss << L"오류가 났소. \r\n오류코드: 0x" << hex << ex.hr;
+		ss << L"오류가 났소. \r\n오류코드: 0x" << hex << ex.hr << L"\r\n오류 라인:" << ex.lineText;
 		MessageBox(nullptr, ss.str().c_str(), nullptr, MB_OK | MB_ICONERROR);
 		return (int)ex.hr;
 	}

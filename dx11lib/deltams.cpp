@@ -1,13 +1,13 @@
 #include "include/cbs/deltams.h"
 
-DeltaMeasure::DeltaMeasure()
+cbs::DeltaMeasure::DeltaMeasure()
 {
 	QueryPerformanceFrequency(&m_freq);
 	QueryPerformanceCounter(&m_tick);
 }
 
 
-double DeltaMeasure::measureDelta()
+double cbs::DeltaMeasure::measureDelta()
 {
 	LARGE_INTEGER now;
 	QueryPerformanceCounter(&now);

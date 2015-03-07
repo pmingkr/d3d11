@@ -11,8 +11,9 @@ public:
 
 	virtual void myLoop() = 0;
 	void loop(); // override
+	void setViewProjection(const XMMATRIX & matrix);
 	void setMaterial(const cbs::Material & mtl); // override
-	void setWorld(const aiMatrix4x4 & matrix); // override
+	void setWorld(const XMMATRIX & matrix); // override
 	void setBoneWorlds(const cbs::Matrix4x3 * matrix, size_t m4x3count); // override
 
 	float getDelta();
@@ -35,6 +36,6 @@ private:
 	cbs::SamplerState		m_sam; // 텍스처 샘플러
 	cbs::DepthStencilState	m_depth; // 뎁스 스텐실 스테이트
 
-	float				m_delta;
-	DeltaMeasure		m_deltaMeasure; // 델타 측정기
+	float					m_delta;
+	cbs::DeltaMeasure		m_deltaMeasure; // 델타 측정기
 };

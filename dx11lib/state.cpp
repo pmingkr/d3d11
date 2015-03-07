@@ -38,6 +38,10 @@ namespace
 		assert(res < cbs::StateConst<D3D11_FILTER>::count);
 		return res;
 	}
+	template <> int makeIndex<bool>(bool value)
+	{
+		return value ? 1 : 0;
+	}
 
 	class IndexMaker
 	{
@@ -106,6 +110,15 @@ cbs::SamplerState::SamplerState(D3D11_TEXTURE_ADDRESS_MODE ta, D3D11_FILTER filt
 		sd.AddressV = ta;
 		sd.AddressW = ta;
 		sd.Filter = filter;
+
+		if(filter == D3D11_FILTER_ANISOTROPIC)
+		{
+			sd.MaxAnisotropy = 4;
+		}
+
+		sd.MinLOD = 0;
+		sd.MaxLOD = D3D11_FLOAT32_MAX;
+
 		throwhr(g_device->CreateSamplerState(&sd, &s));
 	}
 	m_ptr = s;
@@ -115,7 +128,7 @@ cbs::RasterizerState::RasterizerState()
 {
 	m_ptr = nullptr;
 }
-cbs::RasterizerState::RasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_MODE fill)
+cbs::RasterizerState::RasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_MODE fill, bool depthClipping)
 {
 	int index = (IndexMaker)cull | fill;
 	assert(index < _countof(StateContainer::m_container.rasterizer));
@@ -126,6 +139,7 @@ cbs::RasterizerState::RasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_MODE fill
 		memset(&rd, 0, sizeof(rd));
 		rd.CullMode = cull;
 		rd.FillMode = fill;
+		rd.DepthClipEnable = depthClipping;
 		throwhr(g_device->CreateRasterizerState(&rd, &r));
 	}
 	m_ptr = r;

@@ -9,13 +9,16 @@ AutoRelease<IDXGISwapChain>			cbs::g_chain;
 AutoRelease<ID3D11RenderTargetView>	cbs::g_rtv;
 AutoRelease<ID3D11DepthStencilView>	cbs::g_dsv;
 
-D3D11Device::D3D11Device(int width, int height)
+D3D11Device::D3D11Device(int width, int height, int multiSampling)
 	:Window(width, height)
 {
 	if (g_context != nullptr) throw DuplicationException();
 
 	RECT rc;
 	GetClientRect(g_hWnd, &rc);
+
+	assert(multiSampling >= 0);
+	assert(multiSampling <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT);
 
 	D3D_FEATURE_LEVEL featureLevels[] =
 	{
@@ -38,7 +41,7 @@ D3D11Device::D3D11Device(int width, int height)
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	sd.OutputWindow = g_hWnd;
-	sd.SampleDesc.Count = 1;
+	sd.SampleDesc.Count = multiSampling;
 	sd.SampleDesc.Quality = 0;
 	sd.Windowed = TRUE;
 
@@ -65,12 +68,12 @@ D3D11Device::D3D11Device(int width, int height)
 		throw DXException(hr);
 	}
 __succeeded:
-
+	
 	{
 		AutoRelease<ID3D11Texture2D> pBackBuffer;
 		throwhr(g_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer));
 		throwhr(g_device->CreateRenderTargetView(pBackBuffer, nullptr, &g_rtv));
-
+		
 		AutoRelease<ID3D11Texture2D> pDepthStencil;
 
 		D3D11_TEXTURE2D_DESC descDepth;
@@ -80,7 +83,7 @@ __succeeded:
 		descDepth.MipLevels = 1;
 		descDepth.ArraySize = 1;
 		descDepth.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		descDepth.SampleDesc.Count = 1;
+		descDepth.SampleDesc.Count = multiSampling;
 		descDepth.SampleDesc.Quality = 0;
 		descDepth.Usage = D3D11_USAGE_DEFAULT;
 		descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
@@ -88,12 +91,7 @@ __succeeded:
 		descDepth.MiscFlags = 0;
 		throwhr(g_device->CreateTexture2D(&descDepth, nullptr, &pDepthStencil));
 
-		D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
-		memset(&descDSV, 0, sizeof(descDSV));
-		descDSV.Format = descDepth.Format;
-		descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-		descDSV.Texture2D.MipSlice = 0;
-		throwhr(g_device->CreateDepthStencilView(pDepthStencil, &descDSV, &g_dsv));
+		throwhr(g_device->CreateDepthStencilView(pDepthStencil, nullptr, &g_dsv));
 
 		g_context->OMSetRenderTargets(1, &g_rtv, g_dsv);
 	}
@@ -101,10 +99,10 @@ __succeeded:
 	D3D11_VIEWPORT vp;
 	vp.Width = (float)rc.right;
 	vp.Height = (float)rc.bottom;
-	vp.MaxDepth = 1;
-	vp.MinDepth = 0;
-	vp.TopLeftX = 0;
-	vp.TopLeftY = 0;
+	vp.MaxDepth = 1.f;
+	vp.MinDepth = 0.f;
+	vp.TopLeftX = 0.f;
+	vp.TopLeftY = 0.f;
 	g_context->RSSetViewports(1, &vp);
 }
 D3D11Device::~D3D11Device()

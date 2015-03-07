@@ -16,7 +16,7 @@ namespace cbs
 	{
 	public:
 		RasterizerState();
-		RasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_MODE fill);
+		RasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_MODE fill, bool depthClipping);
 	};
 
 	class DepthStencilState : public Pointer<ID3D11DepthStencilState>
@@ -33,6 +33,7 @@ namespace cbs
 	template <> struct StateConst<D3D11_FILL_MODE> { enum { count = 2, offset = 2 }; };
 	template <> struct StateConst<D3D11_COMPARISON_FUNC> { enum { count = 8, offset = 1 }; };
 	template <> struct StateConst<D3D11_DEPTH_WRITE_MASK> { enum { count = 2, offset = 0 }; };
+	template <> struct StateConst<bool> { enum { count = 2, offset = 0 }; };
 	
 
 	class StateContainer

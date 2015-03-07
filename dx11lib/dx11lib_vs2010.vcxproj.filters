@@ -78,6 +78,7 @@
     <ClInclude Include="include\cbs\autoutil.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="include\cbs\alignedarray.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="3d">
