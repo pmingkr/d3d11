@@ -10,9 +10,6 @@
     <ClCompile Include="common.cpp">
       <Filter>3d</Filter>
     </ClCompile>
-    <ClCompile Include="d3d11.cpp">
-      <Filter>3d</Filter>
-    </ClCompile>
     <ClCompile Include="device.cpp">
       <Filter>3d</Filter>
     </ClCompile>

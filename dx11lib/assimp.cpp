@@ -862,7 +862,7 @@ void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const M
 			Matrix4x3 bones[AI_BONE_LIMIT];
 			if (mesh->mNumBones == 1)
 			{
-				unsigned int nodeId = meshex.boneToNode[0];
+				size_t nodeId = meshex.boneToNode[0];
 
 				XMMATRIX offsetm;
 				(aiMatrix4x4&)offsetm = mesh->mBones[0]->mOffsetMatrix;
@@ -872,7 +872,7 @@ void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const M
 			{
 				for (unsigned int bi = 0; bi < mesh->mNumBones; bi++)
 				{
-					unsigned int nodeId = meshex.boneToNode[bi];
+					size_t nodeId = meshex.boneToNode[bi];
 
 					XMMATRIX offsetm;
 					(aiMatrix4x4&)offsetm = mesh->mBones[bi]->mOffsetMatrix;

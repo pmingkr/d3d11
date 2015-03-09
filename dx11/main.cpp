@@ -97,10 +97,10 @@ void Main::procedure(UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 	case WM_KEYDOWN:
-		onKeyDown(wParam, (HIWORD(lParam) & KF_REPEAT) != 0);
+		onKeyDown((int)wParam, (HIWORD(lParam) & KF_REPEAT) != 0);
 		break;
 	case WM_KEYUP:
-		onKeyUp(wParam);
+		onKeyUp((int)wParam);
 		break;
 	}
 }
@@ -135,7 +135,7 @@ void Main::setViewProjection(const XMMATRIX & matrix)
 void Main::setMaterial(const cbs::Material & mtl)
 {
 	ID3D11ShaderResourceView * srv[Material::MAX_TEXTURE];
-	for (size_t i = 0; i < mtl.texCount; i++)
+	for (unsigned int i = 0; i < mtl.texCount; i++)
 	{
 		srv[i] = mtl.textures[i]->getShaderResourceView();
 	}

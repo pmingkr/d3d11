@@ -1,6 +1,5 @@
 #pragma once
 
-#define DX11LIB_STATIC_LIBRARY
 #include <cbs/d3d11.h>
 #include <cbs/deltams.h>
 

@@ -192,3 +192,10 @@ _Pvt_Extensions/
 ModelManifest.xml
 /Debug Static
 /dx11lib/Debug Static
+/dx11/Debug Static
+/Debug Static_vs2010
+/dx11/Debug Static_vs2010
+/dx11/Release Static_vs2010
+/dx11lib/Debug Static_vs2010
+/dx11lib/Release Static_vs2010
+/Release Static_vs2010

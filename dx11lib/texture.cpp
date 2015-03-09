@@ -6,6 +6,7 @@
 #include "WICTextureLoader\WICTextureLoader.h"
 #else
 #include <D3DX11.h>
+#pragma comment(lib, "d3dx11.lib")
 #endif
 
 using namespace cbs;

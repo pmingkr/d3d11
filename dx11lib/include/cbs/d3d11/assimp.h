@@ -55,7 +55,7 @@ namespace cbs
 		aiColor4D ambient;
 		aiColor4D emissive;
 		RasterizerState rasterizer;
-		size_t texCount;
+		unsigned int texCount;
 		float shininess;
 	};
 
@@ -273,7 +273,7 @@ namespace cbs
 			UINT ioffset;
 			UINT icount;
 			D3D11_PRIMITIVE_TOPOLOGY topology;
-			AutoDeleteArray<unsigned int> boneToNode;
+			AutoDeleteArray<size_t> boneToNode;
 		};
 		
 		const aiScene* m_scene;

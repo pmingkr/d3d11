@@ -5,7 +5,7 @@
 
 namespace cbs
 {
-	CBS_DX11LIB_EXPORT extern AutoRelease<ID3D11Device>			g_device;
+	CBS_DX11LIB_EXPORT extern AutoRelease<ID3D11Device>				g_device;
 	CBS_DX11LIB_EXPORT extern AutoRelease<ID3D11DeviceContext>		g_context;
 	CBS_DX11LIB_EXPORT extern AutoRelease<IDXGISwapChain>			g_chain;
 	CBS_DX11LIB_EXPORT extern AutoRelease<ID3D11RenderTargetView>	g_rtv;
