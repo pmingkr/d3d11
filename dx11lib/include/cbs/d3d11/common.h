@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../dllconfig.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <assert.h>
@@ -27,24 +29,30 @@ namespace cbs
 	class DXException
 	{
 	public:
-		DXException(HRESULT hr);
-		DXException(HRESULT hr, const wchar_t * lineText, const wchar_t * filename, int line);
-
 		const HRESULT hr;
 		const wchar_t * const lineText;
 		const wchar_t * const filename;
 		const int line;
+
+		inline DXException(HRESULT hr)
+			:hr(hr), lineText(nullptr), filename(nullptr), line(0)
+		{
+		}
+		inline DXException(HRESULT hr, const wchar_t * lineText, const wchar_t * filename, int line)
+			: hr(hr), lineText(lineText), filename(filename), line(line)
+		{
+		}
 	};
 
-	extern HINSTANCE g_hInst;
+	CBS_DX11LIB_EXPORT extern HINSTANCE g_hInst;
 
-	template <typename T> void SafeRelease(T * & ptr)
+	template <typename T> inline void SafeRelease(T * & ptr)
 	{
 		if(ptr == nullptr) return;
 		ptr->Release();
 		ptr = nullptr;
 	}
-	template <typename T, size_t sz> void SafeReleaseArray(T * (&arr)[sz])
+	template <typename T, size_t sz> inline void SafeReleaseArray(T * (&arr)[sz])
 	{
 		for (size_t i = 0; i < sz; i++)
 		{
@@ -54,16 +62,36 @@ namespace cbs
 
 	class vec
 	{
-	public:
-		vec();
-		explicit vec(float x);
-		vec(float x, float y, float z, float w = 1.f);
-
-		operator const XMVECTOR&() const;
-		operator const aiVector3D&() const;
-
 	private:
 		__m128 m_vector;
+
+	public:
+		inline vec()
+		{
+		}
+		inline explicit vec(float x)
+		{
+			m_vector.m128_f32[0] = x;
+			m_vector.m128_f32[1] = x;
+			m_vector.m128_f32[2] = x;
+			m_vector.m128_f32[3] = 1.f;
+		}
+		inline vec(float x, float y, float z, float w = 1.f)
+		{
+			m_vector.m128_f32[0] = x;
+			m_vector.m128_f32[1] = y;
+			m_vector.m128_f32[2] = z;
+			m_vector.m128_f32[3] = w;
+		}
+
+		inline operator const XMVECTOR&() const
+		{
+			return m_vector;
+		}
+		inline operator const aiVector3D&() const
+		{
+			return (aiVector3D&)m_vector;
+		}
 	};
 }
 

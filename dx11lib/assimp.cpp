@@ -123,17 +123,6 @@ namespace
 	const double DEFAULT_TICK_PER_SECOND = 10.0;
 }
 
-cbs::Matrix4x3::Matrix4x3()
-{
-}
-cbs::Matrix4x3::Matrix4x3(const aiMatrix4x4& m)
-{
-	memcpy(this, &m, sizeof(Matrix4x3));
-}
-cbs::Matrix4x3::Matrix4x3(const XMMATRIX& m)
-{
-	memcpy(this, &m, sizeof(Matrix4x3));
-}
 
 cbs::Assimp::Assimp()
 {
@@ -250,12 +239,6 @@ void cbs::Model::Pose::_resize(size_t size)
 {
 	m_transforms.resizeWithoutKeep(size);
 }
-const cbs::Model::Pose cbs::Model::Pose::operator * (float weight) const
-{
-	cbs::Model::Pose npose = *this;
-	npose *= weight;
-	return npose;
-}
 cbs::Model::Pose& cbs::Model::Pose::operator *= (float weight)
 {
 	XMVECTOR * dst = (XMVECTOR*)m_transforms.data();
@@ -266,12 +249,6 @@ cbs::Model::Pose& cbs::Model::Pose::operator *= (float weight)
 		dst ++;
 	}
 	return *this;
-}
-const cbs::Model::Pose cbs::Model::Pose::operator + (const Pose & other) const
-{
-	cbs::Model::Pose npose = *this;
-	npose += other;
-	return npose;
 }
 cbs::Model::Pose& cbs::Model::Pose::operator += (const Pose & other)
 {
@@ -289,11 +266,6 @@ cbs::Model::Pose& cbs::Model::Pose::operator += (const Pose & other)
 	}
 	return *this;
 }
-const cbs::Model::Pose cbs::Model::Pose::operator * (const XMMATRIX& m) const
-{
-	Pose tmp = *this;
-	return tmp *= m;
-}
 cbs::Model::Pose& cbs::Model::Pose::operator *= (const XMMATRIX& m)
 {
 	XMMATRIX * dst = m_transforms.data();
@@ -304,18 +276,6 @@ cbs::Model::Pose& cbs::Model::Pose::operator *= (const XMMATRIX& m)
 		*dst *= m;
 	}
 	return *this;
-}
-const cbs::Model::Pose cbs::Model::Pose::operator * (const aiMatrix4x4& m) const
-{
-	XMMATRIX tm;
-	(aiMatrix4x4&)tm = m;
-	return *this * tm;
-}
-cbs::Model::Pose& cbs::Model::Pose::operator *= (const aiMatrix4x4& m)
-{
-	XMMATRIX tm;
-	(aiMatrix4x4&)tm = m;
-	return *this *= tm;
 }
 
 cbs::Model::NodeExtra::NodeExtra(size_t id)

@@ -33,9 +33,17 @@ namespace cbs
 		float _12, _22, _32, _42;
 		float _13, _23, _33, _43;
 
-		Matrix4x3();
-		Matrix4x3(const aiMatrix4x4& m);
-		Matrix4x3(const XMMATRIX& m);
+		inline Matrix4x3()
+		{
+		}
+		inline Matrix4x3(const aiMatrix4x4& m)
+		{
+			memcpy(this, &m, sizeof(Matrix4x3));
+		}
+		inline Matrix4x3(const XMMATRIX& m)
+		{
+			memcpy(this, &m, sizeof(Matrix4x3));
+		}
 	};
 
 	struct Material
@@ -54,8 +62,8 @@ namespace cbs
 	class Assimp
 	{
 	public:
-		Assimp();
-		~Assimp();
+		CBS_DX11LIB_EXPORT Assimp();
+		CBS_DX11LIB_EXPORT ~Assimp();
 	};
 
 	const int AI_VERTEX_WEIGHT_COUNT = 4;
@@ -92,61 +100,85 @@ namespace cbs
 			friend Model;
 			friend ModelRenderer;
 		public:
-			Pose();
-			~Pose();
+			CBS_DX11LIB_EXPORT Pose();
+			CBS_DX11LIB_EXPORT ~Pose();
 
-			Pose(const Pose& _copy);
-			Pose(Pose&& _move);
-			Pose& operator =(const Pose& _copy);
-			Pose& operator =(Pose&& _move);
+			CBS_DX11LIB_EXPORT Pose(const Pose& _copy);
+			CBS_DX11LIB_EXPORT Pose(Pose&& _move);
+			CBS_DX11LIB_EXPORT Pose& operator =(const Pose& _copy);
+			CBS_DX11LIB_EXPORT Pose& operator =(Pose&& _move);
 
 			// 할당되어있는 메모리를 지웁니다.
-			void clear();
+			CBS_DX11LIB_EXPORT void clear();
 
 			// 특정 노드의 행렬을 변경합니다.
 			// Row-Based 행렬
-			void setNodeTransform(size_t idx, const XMMATRIX& m);
+			CBS_DX11LIB_EXPORT void setNodeTransform(size_t idx, const XMMATRIX& m);
 
 			// 특정 노드의 행렬을 변경합니다.
 			// Row-Based 행렬
-			void setNodeTransform(size_t idx, const aiMatrix4x4& m);
+			CBS_DX11LIB_EXPORT void setNodeTransform(size_t idx, const aiMatrix4x4& m);
 
 			// 특정 노드의 행렬을 가져옵니다.
 			// Row-Based 행렬
-			const XMMATRIX& getNodeTransform(size_t idx) const;
+			CBS_DX11LIB_EXPORT const XMMATRIX& getNodeTransform(size_t idx) const;
 
 			// 해당 행렬로 모델의 포즈를 변형시킵니다.
-			void transform(const XMMATRIX& m);
+			CBS_DX11LIB_EXPORT void transform(const XMMATRIX& m);
 
 			// 해당 행렬로 모델의 포즈를 변형시킵니다.
-			void transform(const aiMatrix4x4& m);
+			CBS_DX11LIB_EXPORT void transform(const aiMatrix4x4& m);
 			
 			// 애니메이션에서 포즈 가져오기
-			bool set(AnimationStatus* status);
+			CBS_DX11LIB_EXPORT bool set(AnimationStatus* status);
 			
 			// 행렬 상수 배
-			const Pose operator * (float weight) const;
-
-			// 행렬 상수 배
-			Pose& operator *= (float weight);
-
+			CBS_DX11LIB_EXPORT Pose& operator *= (float weight);
+			
 			// 행렬 덧셈
-			const Pose operator + (const Pose & other) const;
-
-			// 행렬 덧셈
-			Pose& operator += (const Pose & other);
+			CBS_DX11LIB_EXPORT Pose& operator += (const Pose & other);
 			
 			// 해당 행렬 곱셈
-			const Pose operator * (const XMMATRIX& m) const;
+			CBS_DX11LIB_EXPORT Pose& operator *= (const XMMATRIX& m);
 
 			// 해당 행렬 곱셈
-			Pose& operator *= (const XMMATRIX& m);
+			inline Pose& operator *= (const aiMatrix4x4& m)
+			{
+				XMMATRIX tm;
+				(aiMatrix4x4&)tm = m;
+				return *this *= tm;
+			}
+
+			// 행렬 상수 배
+			inline Pose operator * (float weight) const
+			{
+				Pose npose = *this;
+				npose *= weight;
+				return npose;
+			}
+
+			// 행렬 덧셈
+			inline const Pose operator + (const Pose & other) const
+			{
+				Pose npose = *this;
+				npose += other;
+				return npose;
+			}
 
 			// 해당 행렬 곱셈
-			const Pose operator * (const aiMatrix4x4& m) const;
+			inline const Pose operator * (const XMMATRIX& m) const
+			{
+				Pose tmp = *this;
+				return tmp *= m;
+			}
 
 			// 해당 행렬 곱셈
-			Pose& operator *= (const aiMatrix4x4& m);
+			inline const Pose operator * (const aiMatrix4x4& m) const
+			{
+				XMMATRIX tm;
+				(aiMatrix4x4&)tm = m;
+				return *this * tm;
+			}
 
 			// 행렬 상수 배
 			friend inline const Pose operator * (float weight, const Pose & other)
@@ -174,13 +206,13 @@ namespace cbs
 			friend Model;
 			friend Pose;
 		public:
-			Animation();
-			Animation(Model * model, size_t idx);
+			CBS_DX11LIB_EXPORT Animation();
+			CBS_DX11LIB_EXPORT Animation(Model * model, size_t idx);
 
 			// 애니메이션 길이 (초 단위)
-			double getDuration() const;
-			double getTPS() const;
-			void setTPS(double tps);
+			CBS_DX11LIB_EXPORT double getDuration() const;
+			CBS_DX11LIB_EXPORT double getTPS() const;
+			CBS_DX11LIB_EXPORT void setTPS(double tps);
 
 		private:
 			double m_tps;
@@ -194,38 +226,38 @@ namespace cbs
 		class NodeExtra
 		{
 		public:
-			NodeExtra(size_t id);
-			~NodeExtra();
+			CBS_DX11LIB_EXPORT NodeExtra(size_t id);
+			CBS_DX11LIB_EXPORT ~NodeExtra();
 
-			size_t getId();
-			bool hasAnimation();
-			void setAnimationCount(size_t count);
-			void setAnimation(size_t id, aiNodeAnim * anim);
-			aiNodeAnim * getAnimation(size_t id);
+			CBS_DX11LIB_EXPORT size_t getId();
+			CBS_DX11LIB_EXPORT bool hasAnimation();
+			CBS_DX11LIB_EXPORT void setAnimationCount(size_t count);
+			CBS_DX11LIB_EXPORT void setAnimation(size_t id, aiNodeAnim * anim);
+			CBS_DX11LIB_EXPORT aiNodeAnim * getAnimation(size_t id);
 
 		private:
 			const size_t m_id;
 			AutoDeleteArray<aiNodeAnim *> m_nodeanim;
 		};
 
-		Model();
-		explicit Model(const char * strName);
-		~Model();
+		CBS_DX11LIB_EXPORT Model();
+		CBS_DX11LIB_EXPORT explicit Model(const char * strName);
+		CBS_DX11LIB_EXPORT ~Model();
 
-		Model(Model&& _move);
-		Model & operator =(Model && _move);
+		CBS_DX11LIB_EXPORT Model(Model&& _move);
+		CBS_DX11LIB_EXPORT Model & operator =(Model && _move);
 
 		// 전체 애니메이션의 초당 Tick Count를 변경
-		void setAnimationTPS(double tps);
+		CBS_DX11LIB_EXPORT void setAnimationTPS(double tps);
 
 		// 애니메이션 개수 가져오기
-		size_t getAnimationCount() const;
+		CBS_DX11LIB_EXPORT size_t getAnimationCount() const;
 
 		// 애니메이션 정보 가져오기
-		Animation * getAnimation(size_t animation) const;
+		CBS_DX11LIB_EXPORT Animation * getAnimation(size_t animation) const;
 		
-		operator bool();
-		bool operator !();
+		CBS_DX11LIB_EXPORT operator bool();
+		CBS_DX11LIB_EXPORT	bool operator !();
 
 	private:
 		Model(const Model& _copy); // = delete
@@ -257,13 +289,13 @@ namespace cbs
 	{
 	public:
 		// 애니메이션 없이 렌더링
-		void render(const Model & model, const aiMatrix4x4 & world);
+		CBS_DX11LIB_EXPORT void render(const Model & model, const aiMatrix4x4 & world);
 
 		// 애니메이션 없이 렌더링
-		void render(const Model & model, const XMMATRIX & world);
+		CBS_DX11LIB_EXPORT void render(const Model & model, const XMMATRIX & world);
 
 		// 해당 포즈로 렌더링
-		void render(const Model & model, const Model::Pose & pose);
+		CBS_DX11LIB_EXPORT void render(const Model & model, const Model::Pose & pose);
 
 		// 렌더러가 렌더링시 사용할 제질을 받아온다.
 		virtual void setMaterial(const Material & mtl) = 0;

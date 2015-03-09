@@ -9,17 +9,17 @@ namespace cbs
 	class TextureData:public IUnknown
 	{
 	public:
-		TextureData();
-		TextureData(TextureData&& move);
-		TextureData& operator =(TextureData&& move);
-		explicit TextureData(const wchar_t * filename);
+		CBS_DX11LIB_EXPORT TextureData();
+		CBS_DX11LIB_EXPORT TextureData(TextureData&& move);
+		CBS_DX11LIB_EXPORT TextureData& operator =(TextureData&& move);
+		CBS_DX11LIB_EXPORT explicit TextureData(const wchar_t * filename);
 
-		ULONG STDMETHODCALLTYPE AddRef(); //override
-		ULONG STDMETHODCALLTYPE Release(); //override
-		HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void ** ppvObject); // override
+		CBS_DX11LIB_EXPORT ULONG STDMETHODCALLTYPE AddRef(); //override
+		CBS_DX11LIB_EXPORT ULONG STDMETHODCALLTYPE Release(); //override
+		CBS_DX11LIB_EXPORT HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void ** ppvObject); // override
 		
-		ID3D11ShaderResourceView* getShaderResourceView();
-		static TextureData * load(const wchar_t * filename);
+		CBS_DX11LIB_EXPORT ID3D11ShaderResourceView* getShaderResourceView();
+		CBS_DX11LIB_EXPORT static TextureData * load(const wchar_t * filename);
 
 	private:
 		TextureData(const TextureData& copy);// = delete
@@ -35,9 +35,9 @@ namespace cbs
 	class Texture :public AutoRelease<TextureData>
 	{
 	public:
-		Texture();
-		explicit Texture(const char * filename, int cp = 949); // 인코딩은 한글을 사용
-		explicit Texture(const wchar_t * filename);
+		CBS_DX11LIB_EXPORT Texture();
+		CBS_DX11LIB_EXPORT explicit Texture(const char * filename, int cp = 949); // 인코딩은 한글을 사용
+		CBS_DX11LIB_EXPORT explicit Texture(const wchar_t * filename);
 	};
 
 }
