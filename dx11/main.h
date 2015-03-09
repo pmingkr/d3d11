@@ -10,6 +10,11 @@ public:
 	~Main();
 
 	virtual void myLoop() = 0;
+
+	virtual void onKeyDown(int key, bool repeat);
+	virtual void onKeyUp(int key);
+
+	void procedure(UINT msg, WPARAM wParam, LPARAM lParam); // override
 	void loop(); // override
 	void setViewProjection(const XMMATRIX & matrix);
 	void setMaterial(const cbs::Material & mtl); // override

@@ -85,6 +85,25 @@ Main::~Main()
 {
 }
 
+void Main::onKeyDown(int key, bool repeat)
+{
+}
+void Main::onKeyUp(int key)
+{
+}
+
+void Main::procedure(UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_KEYDOWN:
+		onKeyDown(wParam, (HIWORD(lParam) & KF_REPEAT) != 0);
+		break;
+	case WM_KEYUP:
+		onKeyUp(wParam);
+		break;
+	}
+}
 void Main::loop()
 {
 	m_delta = (float)m_deltaMeasure.measureDelta(); // 시간 변화량 측정
