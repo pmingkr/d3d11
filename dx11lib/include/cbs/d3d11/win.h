@@ -15,11 +15,11 @@ namespace cbs
 		virtual void loop();
 		virtual void procedure(UINT msg, WPARAM wParam, LPARAM lParam);
 
+		HWND getWindowHandle();
+
 	private:
 		static LRESULT CALLBACK _WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	protected:
+		HWND m_hWnd;
 	};
-
-	extern HWND g_hWnd;
 }

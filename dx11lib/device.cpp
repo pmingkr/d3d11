@@ -15,7 +15,7 @@ D3D11Device::D3D11Device(int width, int height, int multiSampling)
 	if (g_context != nullptr) throw DuplicationException();
 
 	RECT rc;
-	GetClientRect(g_hWnd, &rc);
+	GetClientRect(getWindowHandle(), &rc);
 
 	assert(multiSampling >= 0);
 	assert(multiSampling <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT);
@@ -40,7 +40,7 @@ D3D11Device::D3D11Device(int width, int height, int multiSampling)
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.OutputWindow = g_hWnd;
+	sd.OutputWindow = getWindowHandle();
 	sd.SampleDesc.Count = multiSampling;
 	sd.SampleDesc.Quality = 0;
 	sd.Windowed = TRUE;

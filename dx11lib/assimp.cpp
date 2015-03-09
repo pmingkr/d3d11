@@ -391,7 +391,7 @@ cbs::Model::Model(const char * strName)
 	{
 		wchar_t temp[1024];
 		swprintf_s(temp, L"%hs 모델을 찾을 수 없습니다.\r\n", strName);
-		MessageBox(g_hWnd,temp, nullptr, MB_OK | MB_ICONERROR);
+		MessageBox(nullptr,temp, nullptr, MB_OK | MB_ICONERROR);
 		return;
 	}
 
