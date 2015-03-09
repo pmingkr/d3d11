@@ -8,22 +8,22 @@ namespace cbs
 	class SamplerState:public Pointer<ID3D11SamplerState>
 	{
 	public:
-		SamplerState();
-		SamplerState(D3D11_TEXTURE_ADDRESS_MODE ta, D3D11_FILTER filter);
+		CBS_DX11LIB_EXPORT SamplerState();
+		CBS_DX11LIB_EXPORT SamplerState(D3D11_TEXTURE_ADDRESS_MODE ta, D3D11_FILTER filter);
 	};
 
 	class RasterizerState:public Pointer<ID3D11RasterizerState>
 	{
 	public:
-		RasterizerState();
-		RasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_MODE fill, bool depthClipping);
+		CBS_DX11LIB_EXPORT RasterizerState();
+		CBS_DX11LIB_EXPORT RasterizerState(D3D11_CULL_MODE cull, D3D11_FILL_MODE fill, bool depthClipping);
 	};
 
 	class DepthStencilState : public Pointer<ID3D11DepthStencilState>
 	{
 	public:
-		DepthStencilState();
-		DepthStencilState(D3D11_COMPARISON_FUNC cmp, D3D11_DEPTH_WRITE_MASK mask);
+		CBS_DX11LIB_EXPORT DepthStencilState();
+		CBS_DX11LIB_EXPORT DepthStencilState(D3D11_COMPARISON_FUNC cmp, D3D11_DEPTH_WRITE_MASK mask);
 	};
 	
 	template <typename T> struct StateConst;

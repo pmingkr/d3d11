@@ -11,8 +11,6 @@ MyMain::MyMain()
 {
 	g_main = this;
 
-	m_rotation = 0.f;
-
 	m_tiny = Model("res/tiny_4anim.x");
 	m_tiny.setAnimationTPS(4800.0);
 	m_tinyTime = 0;
@@ -30,40 +28,35 @@ MyMain::MyMain()
 void MyMain::myLoop()
 {
 	// 카메라 행렬 설정
-	{
-		XMMATRIX mVP = XMMatrixLookAtLH(vec(-800.f, 0.f, -400.f), vec(0, 0, 0), vec(0, 0, -1));
-		mVP *= XMMatrixPerspectiveFovLH(XM_PI / 3, (float)getWidth() / getHeight(), 50.f, 10000.f);
-		setViewProjection(mVP);
-	}
+	XMMATRIX mVP = XMMatrixLookAtLH(vec(-800.f, 0.f, -400.f), vec(0, 0, 0), vec(0, 0, -1));
+	mVP *= XMMatrixPerspectiveFovLH(XM_PI / 3, (float)getWidth() / getHeight(), 50.f, 10000.f);
+	setViewProjection(mVP);
+
 
 	XMMATRIX mRes;
 
-	m_rotation += getDelta() * XM_PI*2.f / 10.f;
-	XMMATRIX mCommon = XMMatrixRotationZ(m_rotation);
-	 
 	// 타이니 렌더링
-	mRes = mCommon;
+	mRes = XMMatrixRotationZ(-XM_PI / 2);
 	mRes *= XMMatrixTranslation(0.f, 450.f, 200.f);
 	drawModel(&m_tiny, &m_tinyTime, mRes);
 
 	// 밥 렌더링
-	mRes = XMMatrixScaling(8.f, 8.f, 8.f);
-	mRes *= XMMatrixRotationX(XM_PI);
-	mRes *= mCommon;
+	mRes = XMMatrixRotationX(XM_PI);
+	mRes *= XMMatrixRotationZ(XM_PI / 2);
+	mRes *= XMMatrixScaling(8.f, 8.f, 8.f);
 	mRes *= XMMatrixTranslation(0.f, 150.f, 200.f);
 	drawModel(&m_bob, &m_bobTime, mRes);
 
 	// 드워프 렌더링
-	mRes = XMMatrixScaling(8.f, 8.f, 8.f);
-	mRes *= XMMatrixRotationX(-XM_PI / 2);
-	mRes *= mCommon;
+	mRes = XMMatrixRotationX(-XM_PI / 2);
+	mRes *= XMMatrixRotationZ(XM_PI / 2);
+	mRes *= XMMatrixScaling(8.f, 8.f, 8.f);
 	mRes *= XMMatrixTranslation(0.f, -150.f, 200.f);
 	drawModel(&m_dwarf, &m_dwarfTime, mRes);
 
 	// 물고기 렌더링
-	mRes = XMMatrixScaling(30.f, 30.f, 30.f);
-	mRes *= XMMatrixRotationX(-XM_PI / 2);
-	mRes *= mCommon;
+	mRes = XMMatrixRotationX(-XM_PI / 2);
+	mRes *= XMMatrixScaling(30.f, 30.f, 30.f);
 	mRes *= XMMatrixTranslation(0.f, -450.f, 200.f);
 	drawModel(&m_fish, &m_fishTime, mRes);
 }

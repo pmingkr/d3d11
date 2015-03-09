@@ -30,9 +30,6 @@
     <ClInclude Include="include\cbs\d3d11\device.h">
       <Filter>3d</Filter>
     </ClInclude>
-    <ClInclude Include="encoding.h">
-      <Filter>3d</Filter>
-    </ClInclude>
     <ClInclude Include="include\cbs\d3d11\shader.h">
       <Filter>3d</Filter>
     </ClInclude>
@@ -54,6 +51,10 @@
     <ClInclude Include="include\cbs\alignedarray.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="include\cbs\dllconfig.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="encoding.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WICTextureLoader\WICTextureLoader.cpp">
@@ -68,13 +69,7 @@
     <ClCompile Include="common.cpp">
       <Filter>3d</Filter>
     </ClCompile>
-    <ClCompile Include="d3d11.cpp">
-      <Filter>3d</Filter>
-    </ClCompile>
     <ClCompile Include="device.cpp">
-      <Filter>3d</Filter>
-    </ClCompile>
-    <ClCompile Include="encoding.cpp">
       <Filter>3d</Filter>
     </ClCompile>
     <ClCompile Include="shader.cpp">
@@ -92,5 +87,6 @@
     <ClCompile Include="deltams.cpp">
       <Filter>util</Filter>
     </ClCompile>
+    <ClCompile Include="encoding.cpp" />
   </ItemGroup>
 </Project>

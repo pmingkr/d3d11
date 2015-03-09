@@ -1,6 +1,8 @@
 #include "include/cbs/d3d11/device.h"
 #include "include/cbs/d3d11/state.h"
 
+#pragma comment(lib, "d3d11.lib")
+
 using namespace cbs;
 
 AutoRelease<ID3D11Device>			cbs::g_device;
@@ -9,13 +11,13 @@ AutoRelease<IDXGISwapChain>			cbs::g_chain;
 AutoRelease<ID3D11RenderTargetView>	cbs::g_rtv;
 AutoRelease<ID3D11DepthStencilView>	cbs::g_dsv;
 
-D3D11Device::D3D11Device(int width, int height, int multiSampling)
+CBS_DX11LIB_EXPORT D3D11Device::D3D11Device(int width, int height, int multiSampling)
 	:Window(width, height)
 {
 	if (g_context != nullptr) throw DuplicationException();
 
 	RECT rc;
-	GetClientRect(g_hWnd, &rc);
+	GetClientRect(getWindowHandle(), &rc);
 
 	assert(multiSampling >= 0);
 	assert(multiSampling <= D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT);
@@ -40,7 +42,7 @@ D3D11Device::D3D11Device(int width, int height, int multiSampling)
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.OutputWindow = g_hWnd;
+	sd.OutputWindow = getWindowHandle();
 	sd.SampleDesc.Count = multiSampling;
 	sd.SampleDesc.Quality = 0;
 	sd.Windowed = TRUE;
@@ -105,7 +107,7 @@ __succeeded:
 	vp.TopLeftY = 0.f;
 	g_context->RSSetViewports(1, &vp);
 }
-D3D11Device::~D3D11Device()
+CBS_DX11LIB_EXPORT D3D11Device::~D3D11Device()
 {
 	StateContainer::clear();
 
@@ -128,10 +130,4 @@ D3D11Device::~D3D11Device()
 
 	g_device = nullptr;
 }
-void D3D11Device::clear()
-{
-	// 색 버퍼 지우기
-	float colors[4] = { 0,0,0,1 };
-	g_context->ClearRenderTargetView(g_rtv, colors);
-	g_context->ClearDepthStencilView(g_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
-}
+

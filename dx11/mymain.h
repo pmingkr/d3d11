@@ -12,8 +12,6 @@ public:
 
 private:
 
-	float				m_rotation;
-
 	cbs::Model			m_tiny; // 모델/타이니
 	double				m_tinyTime; // 애니메이션 진행 변수
 

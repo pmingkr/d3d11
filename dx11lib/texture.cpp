@@ -46,7 +46,7 @@ cbs::TextureData::TextureData(const wchar_t * filename)
 	wchar_t temp[1024];
 	swprintf_s(temp, L"%ls 텍스처를 열지 못하였습니다.\r\nHRESULT: 0x%08X\r\n", filename, hr);
 	OutputDebugString(temp);
-	MessageBox(g_hWnd, temp, nullptr, MB_OK | MB_ICONERROR);
+	MessageBox(nullptr, temp, nullptr, MB_OK | MB_ICONERROR);
 	m_ptr = nullptr;
 }
 
