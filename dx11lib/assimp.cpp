@@ -17,12 +17,6 @@
 
 namespace
 {
-	struct BoneWeight
-	{
-		unsigned char blendidx[cbs::AI_VERTEX_WEIGHT_COUNT];
-		float blendwgt[cbs::AI_VERTEX_WEIGHT_COUNT];
-	};
-
 	struct AnimationReader
 	{
 		size_t m_index;
@@ -123,8 +117,22 @@ namespace
 	const double DEFAULT_TICK_PER_SECOND = 10.0;
 }
 
+const cbs::VertexLayout cbs::Model::DEFAULT_BASIC_LAYOUT[3] =
+{
+	VertexLayout(VertexLayout::Position, DXGI_FORMAT_R32G32B32_FLOAT),
+	VertexLayout(VertexLayout::Normal, DXGI_FORMAT_R32G32B32_FLOAT),
+	VertexLayout(VertexLayout::Texcoord, DXGI_FORMAT_R32G32_FLOAT),
+};
+const cbs::VertexLayout cbs::Model::DEFAULT_SKINNED_LAYOUT[5] = 
+{
+	VertexLayout(VertexLayout::Position, DXGI_FORMAT_R32G32B32_FLOAT),
+	VertexLayout(VertexLayout::Normal, DXGI_FORMAT_R32G32B32_FLOAT),
+	VertexLayout(VertexLayout::Texcoord, DXGI_FORMAT_R32G32_FLOAT),
+	VertexLayout(VertexLayout::BlendIndices, DXGI_FORMAT_R8G8B8A8_UINT),
+	VertexLayout(VertexLayout::BlendWeight, DXGI_FORMAT_R32G32B32A32_FLOAT),
+};
 
-cbs::Assimp::Assimp()
+cbs::AssimpLogger::AssimpLogger()
 {
 	aiLogStream stream = aiGetPredefinedLogStream(aiDefaultLogStream_DEBUGGER, NULL);
 
@@ -137,7 +145,7 @@ cbs::Assimp::Assimp()
 	stream = aiGetPredefinedLogStream(aiDefaultLogStream_DEBUGGER, NULL);
 	aiAttachLogStream(&stream);
 }
-cbs::Assimp::~Assimp()
+cbs::AssimpLogger::~AssimpLogger()
 {
 	aiDetachAllLogStreams();
 }
@@ -346,17 +354,11 @@ cbs::Model::Model()
 }
 cbs::Model::Model(const char * strName)
 {
-	m_scene = aiImportFile(strName, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_FlipUVs | aiProcess_SortByPType | aiProcess_LimitBoneWeights);
-	if(m_scene == nullptr)
-	{
-		wchar_t temp[1024];
-		swprintf_s(temp, L"%hs 모델을 찾을 수 없습니다.\r\n", strName);
-		MessageBox(nullptr,temp, nullptr, MB_OK | MB_ICONERROR);
-		return;
-	}
-
-	_makeTexture(strName);
-	_makeBuffer();
+	_create(strName, DEFAULT_BASIC_LAYOUT, DEFAULT_SKINNED_LAYOUT);
+}
+cbs::Model::Model(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl)
+{
+	_create(strName, basic_vl, skinned_vl);
 }
 cbs::Model::~Model()
 {
@@ -412,6 +414,20 @@ bool cbs::Model::operator !()
 {
 	return m_scene == nullptr;
 }
+void cbs::Model::_create(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl)
+{
+	m_scene = aiImportFile(strName, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_FlipUVs | aiProcess_SortByPType | aiProcess_LimitBoneWeights);
+	if (m_scene == nullptr)
+	{
+		wchar_t temp[1024];
+		swprintf_s(temp, L"%hs 모델을 찾을 수 없습니다.\r\n", strName);
+		MessageBox(nullptr, temp, nullptr, MB_OK | MB_ICONERROR);
+		return;
+	}
+
+	_makeTexture(strName);
+	_makeBuffer(basic_vl, skinned_vl);
+}
 void cbs::Model::_makeTexture(const char * strName)
 {
 	// search path
@@ -461,6 +477,7 @@ void cbs::Model::_makeTexture(const char * strName)
 
 					assert(path.length < pathleft);
 					memcpy(strpathname, path.data, path.length + 1);
+
 					mtld.textures[t] = Texture(strpath);
 				}
 			}
@@ -530,10 +547,14 @@ void cbs::Model::_makeTexture(const char * strName)
 	}
 
 }
-void cbs::Model::_makeBuffer()
+void cbs::Model::_makeBuffer(DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl)
 {
 	char * vbuffer;
 	vindex_t * ibuffer;
+
+	unsigned int basic_stride = VertexLayout::getFullSize(basic_vl);
+	unsigned int skinned_stride = VertexLayout::getFullSize(skinned_vl);
+
 
 	#pragma region 뼈대 이름 및 ID 지정
 	std::map<std::string, aiNode*> nodemap;
@@ -552,7 +573,7 @@ void cbs::Model::_makeBuffer()
 	m_nodeCount = id;
 	#pragma endregion
 
-	#pragma region 메쉬 전처리
+	#pragma region 메쉬 처리 1 Pass
 	{
 		m_meshes = new MeshExtra[m_scene->mNumMeshes];
 		UINT icount = 0;
@@ -561,60 +582,40 @@ void cbs::Model::_makeBuffer()
 		
 		for (size_t i = 0; i < m_scene->mNumMeshes; i++)
 		{
-			MeshExtra& region = m_meshes[i];
+			MeshExtra& meshex = m_meshes[i];
 			const aiMesh * mesh = m_scene->mMeshes[i];
 
-			UINT stride = sizeof(aiVector3D);
-			if (mesh->mNormals != nullptr)
-			{
-				stride += sizeof(aiVector3D);
-			}
-			for (size_t ti = 0; ti < AI_MAX_NUMBER_OF_TEXTURECOORDS; ti++)
-			{
-				if (mesh->mTextureCoords[ti] == nullptr) continue;
-				stride += sizeof(float) * mesh->mNumUVComponents[ti];
-			}
-						
-			for (unsigned int ci = 0; ci < AI_MAX_NUMBER_OF_COLOR_SETS; ci++)
-			{
-				if (mesh->mColors[ci] == nullptr) continue;
-				stride += sizeof(aiColor4D);
-			}
-
-			if (mesh->mBones != nullptr)
-			{
-				stride += sizeof(BoneWeight);
-			}
-			region.stride = stride;
-			region.ioffset = icount;
+			meshex.skinned = (mesh->mBones != nullptr);
+			meshex.stride = (meshex.skinned ? skinned_stride : basic_stride);
+			meshex.ioffset = icount;
 
 			unsigned int faceSize;
 			switch (mesh->mPrimitiveTypes)
 			{
 			case aiPrimitiveType_POINT:
 				faceSize = 1;
-				region.topology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+				meshex.topology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
 				break;
 			case aiPrimitiveType_LINE:
 				faceSize = 2;
-				region.topology = D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+				meshex.topology = D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
 				break;
 			case aiPrimitiveType_TRIANGLE:
 				faceSize = 3;
-				region.topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+				meshex.topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 				break;
 			//case aiPrimitiveType_POLYGON:
 			default:
 				faceSize = 3;
-				region.topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+				meshex.topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 				OutputDebugString(L"모델 파일이 폴리곤을 필요로 하지만, 지원되지 않습니다.\r\n");
 				DebugBreak();
 				break;
 			}
-			icount += region.icount = mesh->mNumFaces * faceSize;
+			icount += meshex.icount = mesh->mNumFaces * faceSize;
 
-			region.offset = vsize;
-			vsize += mesh->mNumVertices * stride;
+			meshex.offset = vsize;
+			vsize += mesh->mNumVertices * meshex.stride;
 		}
 
 		size_t vfullsize = vsize + icount * sizeof(vindex_t);
@@ -624,7 +625,7 @@ void cbs::Model::_makeBuffer()
 	}
 	#pragma endregion
 
-	#pragma region 메쉬 후처리
+	#pragma region 메쉬 처리 2 Pass
 	char * vptr = vbuffer;
 	vindex_t * iptr = ibuffer;
 	AutoDelete<char> __autodel = vbuffer;
@@ -636,8 +637,8 @@ void cbs::Model::_makeBuffer()
 		{
 			MeshExtra& meshex = m_meshes[i];
 			const aiMesh * mesh = m_scene->mMeshes[i];
-			UINT stride = meshex.stride;
 
+			unsigned int stride = meshex.stride;
 			unsigned int vcount = mesh->mNumVertices;
 			unsigned int vsize = vcount * stride;
 			voffset += vsize;
@@ -664,58 +665,101 @@ void cbs::Model::_makeBuffer()
 				}
 			}
 
-			// fill vertex
-			for (unsigned int vi = 0; vi < vcount; vi++)
+			char * ptr_blendwgt = nullptr, * ptr_blendidx = nullptr;
+			DataList<VertexLayout> vls = meshex.skinned ? skinned_vl : basic_vl;
+			for (size_t vli = 0; vli < vls.size(); vli++)
 			{
-				*((aiVector3D*)vptr) = mesh->mVertices[vi];
-				vptr += stride;
-			}
-			vptr -= vsize;
-			vptr += sizeof(aiVector3D);
+				const VertexLayout & vl = vls[vli];
 
-			// fill normal
-			if (mesh->mNormals != nullptr)
-			{
-				for (unsigned int vi = 0; vi < vcount; vi++)
+				switch (vl.semantic)
 				{
-					*((aiVector3D*)vptr) = mesh->mNormals[vi];
-					vptr += stride;
+				case VertexLayout::Position:
+					assert(vl.format == DXGI_FORMAT_R32G32B32_FLOAT); // 다른 타입 미지원
+					if (mesh->mVertices != nullptr)
+					{
+						for (unsigned int vi = 0; vi < vcount; vi++)
+						{
+							*((aiVector3D*)vptr) = mesh->mVertices[vi];
+							vptr += stride;
+						}
+						vptr -= vsize;
+					}
+					vptr += sizeof(aiVector3D);
+					break;
+				case VertexLayout::Normal:
+					assert(vl.format == DXGI_FORMAT_R32G32B32_FLOAT); // 다른 타입 미지원
+					if (mesh->mNormals != nullptr)
+					{
+						for (unsigned int vi = 0; vi < vcount; vi++)
+						{
+							*((aiVector3D*)vptr) = mesh->mNormals[vi];
+							vptr += stride;
+						}
+						vptr -= vsize;
+					}
+					vptr += sizeof(aiVector3D);
+					break;
+				case VertexLayout::Texcoord:
+					{
+						assert(vl.slot < AI_MAX_NUMBER_OF_TEXTURECOORDS);
+						aiVector3D * texcoords = mesh->mTextureCoords[vl.slot];
+						VertexFormatInfo vinfo(vl.format);
+						assert(vinfo.elementType == VertexFormatInfo::Float); // 다른 타입 미지원
+						assert(vinfo.special == VertexFormatInfo::Normal);
+						assert(vinfo.elementSize == sizeof(float));
+						if (texcoords != nullptr)
+						{
+							unsigned int tsz = mesh->mNumUVComponents[vl.slot] * sizeof(float);
+							if(tsz > vinfo.byteSize) tsz = vinfo.byteSize;
+							for (unsigned int vi = 0; vi < vcount; vi++)
+							{
+								memcpy(vptr, &texcoords[vi], tsz);
+								vptr += stride;
+							}
+							vptr -= vsize;
+						}
+						vptr += vinfo.byteSize;
+						break;
+					}
+				case VertexLayout::Color:
+					{
+						assert(vl.slot < AI_MAX_NUMBER_OF_COLOR_SETS);
+						assert(vl.format == DXGI_FORMAT_R32G32B32A32_FLOAT); // 다른 타입 미지원
+						aiColor4D * colors = mesh->mColors[vl.slot];
+						if (colors != nullptr)
+						{
+							for (unsigned int vi = 0; vi < vcount; vi++)
+							{
+								*((aiColor4D*)vptr) = colors[vi];
+								vptr += stride;
+							}
+							vptr -= vsize;
+						}
+						vptr += sizeof(aiColor4D);
+						break;
+					}
+				case VertexLayout::BlendWeight:
+					assert(vl.format == DXGI_FORMAT_R32G32B32A32_FLOAT); // 다른 타입 미지원
+					ptr_blendwgt = vptr;
+					vptr += sizeof(float) * 4;
+					break;
+				case VertexLayout::BlendIndices:
+					assert(vl.format == DXGI_FORMAT_R8G8B8A8_UINT); // 다른 타입 미지원
+					ptr_blendidx = vptr;
+					vptr += sizeof(unsigned char) * 4;
+					break;
+				default:
+					assert(!"Unsupported"); // 미지원 시멘틱
 				}
-				vptr -= vsize;
-				vptr += sizeof(aiVector3D);
 			}
 
-			// fill texcoord
-			for (unsigned int ti = 0; ti < AI_MAX_NUMBER_OF_TEXTURECOORDS; ti++)
-			{
-				aiVector3D * texcoords = mesh->mTextureCoords[ti];
-				if (texcoords == nullptr) continue;
-				unsigned int tsz = mesh->mNumUVComponents[ti] * sizeof(float);
-				for (unsigned int vi = 0; vi < vcount; vi++)
-				{
-					memcpy(vptr, &texcoords[vi], tsz);
-					vptr += stride;
-				}
-				vptr -= vsize;
-				vptr += tsz;
-			}
-
-			// fill color
-			for (unsigned int ci = 0; ci < AI_MAX_NUMBER_OF_COLOR_SETS; ci++)
-			{
-				aiColor4D * colors = mesh->mColors[ci];
-				if (colors == nullptr) continue;
-				for (unsigned int vi = 0; vi < vcount; vi++)
-				{
-					*((aiColor4D*)vptr) = colors[vi];
-					vptr += stride;
-				}
-				vptr -= vsize;
-				vptr += sizeof(aiColor4D);
-			}
+			vptr -= stride;
+			vptr += vsize;
 
 			// fill bone
-			if (mesh->mBones != nullptr)
+			if (mesh->mBones != nullptr && 
+				ptr_blendwgt != nullptr && 
+				ptr_blendidx != nullptr)
 			{
 				meshex.boneToNode.allocate(mesh->mNumBones);
 				assert(mesh->mNumBones <= 0xff); // 바이트 범위 제한
@@ -734,25 +778,22 @@ void cbs::Model::_makeBuffer()
 					for (unsigned int wi = 0; wi < bone->mNumWeights; wi++)
 					{
 						aiVertexWeight &w = bone->mWeights[wi];
-						BoneWeight* bw = (BoneWeight*)(vptr + w.mVertexId * stride);
+						float* pwgt				= (float*)(ptr_blendwgt + w.mVertexId * stride);
+						unsigned char * pidx	= (unsigned char *)(ptr_blendidx + w.mVertexId * stride);
 						for (int j = 0; j < AI_VERTEX_WEIGHT_COUNT; j ++ )
 						{
-							if(bw->blendwgt[j] != 0.f) continue;
-							bw->blendidx[j] = (unsigned char)bi;
-							bw->blendwgt[j] = w.mWeight;
+							if(pwgt[j] != 0.f) continue;
+							pidx[j] = (unsigned char)bi;
+							pwgt[j] = w.mWeight;
 							break;
 						}
 					}
 				}
-				vptr += sizeof(BoneWeight);
 			}
-
-			vptr -= stride;
-			vptr += vsize;
 		}
 
-		m_vb = Buffer(D3D11_BIND_VERTEX_BUFFER, voffset, vbuffer);
-		m_ib = Buffer(D3D11_BIND_INDEX_BUFFER, ioffset * sizeof(vindex_t), ibuffer);
+		m_vb = Buffer(D3D11_BIND_VERTEX_BUFFER, AnyData(vbuffer, voffset));
+		m_ib = Buffer(D3D11_BIND_INDEX_BUFFER, AnyData(ibuffer, ioffset * sizeof(vindex_t)));
 	}
 	#pragma endregion
 

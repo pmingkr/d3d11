@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common.h"
-#include "win.h"
+#include "../win.h"
 
 namespace cbs
 {

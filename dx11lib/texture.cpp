@@ -1,8 +1,8 @@
 #include "include/cbs/d3d11/texture.h"
 #include "include/cbs/d3d11/device.h"
-#include "encoding.h"
+#include "include/cbs/encoding.h"
 
-#if _MSC_VER >= 1700
+#if _MSC_VER >= 1700 // VS 2012 이상
 #include "WICTextureLoader\WICTextureLoader.h"
 #else
 #include <D3DX11.h>
@@ -10,31 +10,34 @@
 #endif
 
 using namespace cbs;
+using namespace std;
 
-std::map<std::wstring, TextureData*> cbs::TextureData::m_textures;
 
-cbs::TextureData::TextureData()
+AutoDelete<map<wstring, TextureData*>> TextureData::m_textures;
+
+TextureData::TextureData()
 {
 	m_reference = 0;
 }
-cbs::TextureData::TextureData(TextureData&& move)
+TextureData::TextureData(TextureData&& _move)
 {
-	m_filename = std::move(move.m_filename);
-	m_ptr = std::move(move.m_ptr);
-	m_reference = move.m_reference;
-	move.m_reference = 0;
+	m_filename = move(_move.m_filename);
+	m_ptr = move(_move.m_ptr);
+	m_reference = _move.m_reference;
+	_move.m_reference = 0;
 }
-TextureData& cbs::TextureData::operator =(TextureData&& move)
+TextureData& TextureData::operator =(TextureData&& _move)
 {
 	this->~TextureData();
-	new(this) TextureData(std::move(move));
+	new(this) TextureData(move(_move));
 	return *this;
 }
-cbs::TextureData::TextureData(const wchar_t * filename)
+TextureData::TextureData(const wchar_t * filename)
 {
 	m_reference = 0;
+	m_filename = filename;
 	
-#if _MSC_VER >= 1700
+#if _MSC_VER >= 1700 // VS 2012 이상
 	HRESULT hr = DirectX::CreateWICTextureFromFile(g_device, g_context, filename, nullptr, &m_ptr);
 #else
 	D3DX11_IMAGE_LOAD_INFO ili;
@@ -51,58 +54,71 @@ cbs::TextureData::TextureData(const wchar_t * filename)
 	m_ptr = nullptr;
 }
 
-ULONG cbs::TextureData::AddRef() //override
+ULONG TextureData::AddRef() //override
 {
 	return ++m_reference;
 }
-ULONG cbs::TextureData::Release() //override
+ULONG TextureData::Release() //override
 {
 	ULONG res = --m_reference;
 	if (res == 0)
 	{
-		m_textures.erase(m_filename);
+		if (!m_filename.empty())
+		{
+			assert(m_textures != nullptr);
+			m_textures->erase(m_filename);
+		}
 		delete this;
 	}
 	return res;
 }
-HRESULT cbs::TextureData::QueryInterface(REFIID riid, void ** ppvObject) // override
+HRESULT TextureData::QueryInterface(REFIID riid, void ** ppvObject) // override
 {
 	return m_ptr->QueryInterface(riid, ppvObject);
 }
 
-ID3D11ShaderResourceView* cbs::TextureData::getShaderResourceView()
+TextureData * TextureData::load(const wchar_t * filename)
 {
-	return m_ptr;
-}
-cbs::TextureData * cbs::TextureData::load(const wchar_t * filename)
-{
-	std::wstring strfilename = filename;
+	TextureData * ptr;
+	if(filename[0] == L'\0')
+	{
+		ptr = new TextureData();
+		ptr->AddRef();
+		return ptr;
+	}
+	wstring strfilename = filename;
 	size_t filelen = strfilename.size();
 
-	auto pair = m_textures.insert(std::pair<std::wstring, TextureData*>(std::move(strfilename), nullptr));
-	TextureData * ptr;
-	if (pair.second)
+	auto res = _getTextureMap()->insert(pair<wstring, TextureData*>(move(strfilename), nullptr));
+	if (res.second)
 	{
-		pair.first->second = ptr = new TextureData(filename);
+		res.first->second = ptr = new TextureData(filename);
 	}
 	else
 	{
-		ptr = pair.first->second;
+		ptr = res.first->second;
 	}
 	ptr->AddRef();
 	return ptr;
 }
-
-cbs::Texture::Texture()
+void TextureData::cleanupMemory()
 {
+	if(m_textures != nullptr)
+	{
+		auto iter = m_textures->begin();
+		auto end = m_textures->end();
+		while (iter != end)
+		{
+			TextureData * td = iter->second;
+			td->m_ptr = nullptr;
+			td->m_filename.clear();
+			iter++;
+		}
+		m_textures = nullptr;
+	}
 }
-cbs::Texture::Texture(const char * filename, int cp)
+map<std::wstring, TextureData*> * TextureData::_getTextureMap()
 {
-	wchar_t temp[MAX_PATH];
-	cnvcpy(temp, filename, cp);	
-	m_ptr = TextureData::load(temp);
-}
-cbs::Texture::Texture(const wchar_t * filename)
-{
-	m_ptr = TextureData::load(filename);
+	m_textures = new map<wstring, TextureData*>();
+	return m_textures;
 }

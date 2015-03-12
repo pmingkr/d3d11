@@ -4,19 +4,7 @@
     <ClCompile Include="assimp.cpp">
       <Filter>3d</Filter>
     </ClCompile>
-    <ClCompile Include="buffer.cpp">
-      <Filter>3d</Filter>
-    </ClCompile>
-    <ClCompile Include="common.cpp">
-      <Filter>3d</Filter>
-    </ClCompile>
     <ClCompile Include="device.cpp">
-      <Filter>3d</Filter>
-    </ClCompile>
-    <ClCompile Include="encoding.cpp">
-      <Filter>3d</Filter>
-    </ClCompile>
-    <ClCompile Include="shader.cpp">
       <Filter>3d</Filter>
     </ClCompile>
     <ClCompile Include="state.cpp">
@@ -25,20 +13,14 @@
     <ClCompile Include="texture.cpp">
       <Filter>3d</Filter>
     </ClCompile>
-    <ClCompile Include="win.cpp">
-      <Filter>3d</Filter>
-    </ClCompile>
-    <ClCompile Include="deltams.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
     <ClCompile Include="WICTextureLoader\WICTextureLoader.cpp">
       <Filter>WIC 텍스처 로더</Filter>
     </ClCompile>
+    <ClCompile Include="win.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\cbs\d3d11\win.h">
-      <Filter>3d</Filter>
-    </ClInclude>
     <ClInclude Include="include\cbs\d3d11\assimp.h">
       <Filter>3d</Filter>
     </ClInclude>
@@ -52,9 +34,6 @@
       <Filter>3d</Filter>
     </ClInclude>
     <ClInclude Include="include\cbs\d3d11\device.h">
-      <Filter>3d</Filter>
-    </ClInclude>
-    <ClInclude Include="encoding.h">
       <Filter>3d</Filter>
     </ClInclude>
     <ClInclude Include="include\cbs\d3d11\shader.h">
@@ -75,7 +54,27 @@
     <ClInclude Include="include\cbs\autoutil.h">
       <Filter>util</Filter>
     </ClInclude>
-    <ClInclude Include="include\cbs\alignedarray.h" />
+    <ClInclude Include="include\cbs\datalist.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\alignedarray.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\dllconfig.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\d3d11\vertexlayout.h">
+      <Filter>3d</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\encoding.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\indexmaker.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cbs\win.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="3d">

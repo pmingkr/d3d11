@@ -20,8 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\cbs\alignedarray.h" />
+    <ClInclude Include="include\cbs\d3d11\vertexlayout.h" />
+    <ClInclude Include="include\cbs\datalist.h" />
     <ClInclude Include="include\cbs\deltams.h" />
-    <ClInclude Include="encoding.h" />
     <ClInclude Include="include\cbs\d3d11\assimp.h" />
     <ClInclude Include="include\cbs\autoutil.h" />
     <ClInclude Include="include\cbs\d3d11\buffer.h" />
@@ -31,17 +32,15 @@
     <ClInclude Include="include\cbs\d3d11\shader.h" />
     <ClInclude Include="include\cbs\d3d11\state.h" />
     <ClInclude Include="include\cbs\d3d11\texture.h" />
+    <ClInclude Include="include\cbs\dllconfig.h" />
+    <ClInclude Include="include\cbs\encoding.h" />
+    <ClInclude Include="include\cbs\indexmaker.h" />
+    <ClInclude Include="include\cbs\win.h" />
     <ClInclude Include="WICTextureLoader\WICTextureLoader.h" />
-    <ClInclude Include="include\cbs\d3d11\win.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="assimp.cpp" />
-    <ClCompile Include="buffer.cpp" />
-    <ClCompile Include="deltams.cpp" />
-    <ClCompile Include="encoding.cpp" />
     <ClCompile Include="device.cpp" />
-    <ClCompile Include="common.cpp" />
-    <ClCompile Include="shader.cpp" />
     <ClCompile Include="state.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="WICTextureLoader\WICTextureLoader.cpp" />

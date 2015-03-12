@@ -43,9 +43,7 @@ namespace cbs
 		{
 		}
 	};
-
-	CBS_DX11LIB_EXPORT extern HINSTANCE g_hInst;
-
+	
 	template <typename T> inline void SafeRelease(T * & ptr)
 	{
 		if(ptr == nullptr) return;

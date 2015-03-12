@@ -3,7 +3,9 @@
 #include <cbs/d3d11.h>
 #include <cbs/deltams.h>
 
-class Main :public cbs::D3D11Device, public cbs::Assimp, public cbs::ModelRenderer
+class Main :
+	public cbs::D3D11Device,  // Direct 3D 11 디바이스, 윈도우를 포함하는 클래스이다.
+	public cbs::ModelRenderer // 모델을 랜더링해주는 클래스
 {
 public:
 	Main(int width, int height);
@@ -26,6 +28,7 @@ public:
 	int getHeight();
 
 private:
+	cbs::AssimpLogger		m_assimpLogger; // Assimp의 로그를 Output에 출력하도록 한다.
 
 	int						m_width, m_height; // 화면 크기
 

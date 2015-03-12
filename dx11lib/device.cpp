@@ -1,5 +1,7 @@
 #include "include/cbs/d3d11/device.h"
 #include "include/cbs/d3d11/state.h"
+#include "include/cbs/d3d11/texture.h"
+
 
 #pragma comment(lib, "d3d11.lib")
 
@@ -109,7 +111,8 @@ __succeeded:
 }
 CBS_DX11LIB_EXPORT D3D11Device::~D3D11Device()
 {
-	StateContainer::clear();
+	StateContainer::cleanupMemory();
+	TextureData::cleanupMemory();
 
 	g_rtv = nullptr;
 	g_dsv = nullptr;
@@ -127,7 +130,6 @@ CBS_DX11LIB_EXPORT D3D11Device::~D3D11Device()
 	//d3ddebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
 
 #endif
-
 	g_device = nullptr;
 }
 

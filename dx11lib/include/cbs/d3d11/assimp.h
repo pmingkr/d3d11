@@ -4,7 +4,9 @@
 #include "buffer.h"
 #include "texture.h"
 #include "state.h"
+#include "vertexlayout.h"
 #include "../alignedarray.h"
+#include "../datalist.h"
 
 #include <vector>
 
@@ -22,7 +24,7 @@ struct aiAnimation;
 namespace cbs
 {
 	struct Material;
-	class Assimp;
+	class AssimpLogger;
 	class Model;
 	class ModelRenderer;
 	typedef unsigned short vindex_t;
@@ -59,11 +61,15 @@ namespace cbs
 		float shininess;
 	};
 
-	class Assimp
+	class AssimpLogger
 	{
 	public:
-		CBS_DX11LIB_EXPORT Assimp();
-		CBS_DX11LIB_EXPORT ~Assimp();
+		CBS_DX11LIB_EXPORT AssimpLogger();
+		CBS_DX11LIB_EXPORT ~AssimpLogger();
+	};
+
+	class CBS_DEPRECATED Assimp: public AssimpLogger
+	{
 	};
 
 	const int AI_VERTEX_WEIGHT_COUNT = 4;
@@ -242,6 +248,7 @@ namespace cbs
 
 		CBS_DX11LIB_EXPORT Model();
 		CBS_DX11LIB_EXPORT explicit Model(const char * strName);
+		CBS_DX11LIB_EXPORT Model(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl);
 		CBS_DX11LIB_EXPORT ~Model();
 
 		CBS_DX11LIB_EXPORT Model(Model&& _move);
@@ -259,11 +266,15 @@ namespace cbs
 		CBS_DX11LIB_EXPORT operator bool();
 		CBS_DX11LIB_EXPORT	bool operator !();
 
+		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_BASIC_LAYOUT[3];
+		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_SKINNED_LAYOUT[5];
+
 	private:
+		void _create(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl);
 		Model(const Model& _copy); // = delete
 		Model & operator =(const Model & _copy); // = delete
 		void _makeTexture(const char * strName);
-		void _makeBuffer();
+		void _makeBuffer(DataList<VertexLayout> vl, DataList<VertexLayout> skinned_vl);
 		template <typename LAMBDA> void _callEachNode(aiNode * node, LAMBDA &lambda);
 		
 		struct MeshExtra
@@ -272,8 +283,9 @@ namespace cbs
 			UINT offset;
 			UINT ioffset;
 			UINT icount;
-			D3D11_PRIMITIVE_TOPOLOGY topology;
 			AutoDeleteArray<size_t> boneToNode;
+			D3D11_PRIMITIVE_TOPOLOGY topology;
+			bool skinned;
 		};
 		
 		const aiScene* m_scene;

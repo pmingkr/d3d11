@@ -48,24 +48,10 @@ Main::Main(int width, int height) :D3D11Device(width, height, 4)
 	m_height = height;
 
 	// basic Á¤Á¡ ¼ÎÀÌ´õ & Á¤Á¡ ·¹ÀÌ¾Æ¿ô
-	static const D3D11_INPUT_ELEMENT_DESC layout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, normal), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	m_vs_basic = VertexShader(s_vs_basic, layout); // Á¤Á¡ ¼ÎÀÌ´õ
+	m_vs_basic = VertexShader(s_vs_basic, Model::DEFAULT_BASIC_LAYOUT);
 
 	// skinned Á¤Á¡ ¼ÎÀÌ´õ & Á¤Á¡ ·¹ÀÌ¾Æ¿ô
-	static const D3D11_INPUT_ELEMENT_DESC layout_skinned[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offsetof(Vertex, normal), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "BLENDINDICES", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, offsetof(Vertex, blendidx), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(Vertex, blendwgt), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	m_vs_skinned = VertexShader(s_vs_skinned, layout_skinned);
+	m_vs_skinned = VertexShader(s_vs_skinned, Model::DEFAULT_SKINNED_LAYOUT);
 	
 	// ÇÈ¼¿ ¼ÎÀÌ´õ
 	m_ps_basic = PixelShader(s_ps_basic);
@@ -79,7 +65,6 @@ Main::Main(int width, int height) :D3D11Device(width, height, 4)
 	
 	m_sam = SamplerState(D3D11_TEXTURE_ADDRESS_WRAP, D3D11_FILTER_MIN_MAG_MIP_LINEAR); // ¹Ó¸Ê
 	m_depth = DepthStencilState(D3D11_COMPARISON_LESS, D3D11_DEPTH_WRITE_MASK_ALL); // µª½º ½ºÅÙ½Ç ½ºÅ×ÀÌÆ®
-
 }
 Main::~Main()
 {
@@ -193,7 +178,10 @@ int Main::getHeight()
 	return m_height;
 }
 
+
 #pragma region ¸Þ¸ð¸® ´©¼ö °¨Áö
+
+#include <crtdbg.h>
 
 #pragma warning(disable:4074)
 #pragma init_seg(compiler)
@@ -202,7 +190,7 @@ struct __StaticRun
 {
 	__StaticRun()
 	{
-		//_crtBreakAlloc = 252;
+		//_crtBreakAlloc = 261;
 	}
 	~__StaticRun()
 	{

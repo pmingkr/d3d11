@@ -104,25 +104,31 @@ namespace cbs
 	template <typename T> class AutoDelete :public Pointer<T>
 	{
 	public:
-		AutoDelete()
+		inline AutoDelete()
 		{
 			m_ptr = nullptr;
 		}
-		AutoDelete(T * ptr)
+		inline AutoDelete(T * ptr)
 		{
 			m_ptr = ptr;
 		}
-		AutoDelete(AutoDelete && move)
+		inline AutoDelete(AutoDelete && move)
 		{
 			m_ptr = move.m_ptr;
 			move.m_ptr = nullptr;
 		}
-		~AutoDelete()
+		inline ~AutoDelete()
 		{
 			delete m_ptr;
 		}
 
-		AutoDelete& operator =(AutoDelete&& move)
+		inline AutoDelete& operator =(T * ptr)
+		{
+			this->~AutoDelete();
+			new(this) AutoDelete(ptr);
+			return *this;
+		}
+		inline AutoDelete& operator =(AutoDelete&& move)
 		{
 			this->~AutoDelete();
 			new(this) AutoDelete(move);
