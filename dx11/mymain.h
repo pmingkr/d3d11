@@ -2,27 +2,33 @@
 
 #include "main.h"
 
+class MyModel
+{
+public:
+	MyModel();
+	void load(const char * filename);
+	void setAnimationTPS(double animationTime);
+	void draw(const XMMATRIX& matrix);
+
+private:
+	cbs::Model			m_model; // 모델
+	double				m_time; // 애니메이션 진행 변수
+};
+
 class MyMain:public Main
 {
 public:
 	MyMain();
 
-	void myLoop(); // override
-	void drawModel(cbs::Model * model, double * time, const XMMATRIX& matrix);
+	virtual void myLoop(); // override
 
 private:
 
-	cbs::Model			m_tiny; // 모델/타이니
-	double				m_tinyTime; // 애니메이션 진행 변수
-
-	cbs::Model			m_dwarf; // 모델/드워프
-	double				m_dwarfTime; // 애니메이션 진행 변수
-
-	cbs::Model			m_bob; // 모델/밥
-	double				m_bobTime; // 애니메이션 진행 변수
-
-	cbs::Model			m_fish; // 모델/물고기
-	double				m_fishTime; // 애니메이션 진행 변수
+	MyModel m_tiny; // 타이니
+	MyModel m_bob; // 밥
+	MyModel m_dwarf; // 드워프
+	MyModel m_fish; // 물고기
+	MyModel m_ninja; // ninja
 };
 
 extern MyMain * g_main;

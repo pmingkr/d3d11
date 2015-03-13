@@ -6,23 +6,45 @@ using namespace cbs;
 
 MyMain * g_main;
 
+MyModel::MyModel()
+{
+	m_time = 0;
+}
+void MyModel::load(const char * filename)
+{
+	m_model = Model(filename);
+	m_time = 0;
+}
+void MyModel::setAnimationTPS(double animationTime)
+{
+	m_model.setAnimationTPS(animationTime);
+}
+void MyModel::draw(const XMMATRIX& matrix)
+{
+	// 애니메이션 재생
+	Model::Pose pose;
+	Model::AnimationStatus status;
+	
+	status.animation = m_model.getAnimation(0); // 애니메이션 가져오기
+	status.time = m_time + g_main->getDelta(); // 애니메이션 시간 이동
+	pose.set(&status); // 포즈 가져오기
+	m_time = status.time; // 애니메이션 시간 보정
+	pose.transform(matrix); // 월드 행렬 설정
+	g_main->render(m_model, pose); // 렌더링
+}
+
 MyMain::MyMain()
 	:Main(800, 600)
 {
 	g_main = this;
 
-	m_tiny = Model("res/tiny_4anim.x");
+	m_tiny.load("res/tiny_4anim.x");
 	m_tiny.setAnimationTPS(4800.0);
-	m_tinyTime = 0;
 
-	m_dwarf = Model("models-nonbsd/X/dwarf.x");
-	m_dwarfTime = 0;
-
-	m_bob = Model("models-nonbsd/MD5/Bob.md5mesh");
-	m_bobTime = 0;
-	
-	m_fish = Model("models-nonbsd/Ogre/OgreSDK/fish.mesh.xml");
-	m_fishTime = 0;
+	m_dwarf.load("models-nonbsd/X/dwarf.x");
+	m_bob.load("models-nonbsd/MD5/Bob.md5mesh");
+	m_fish.load("models-nonbsd/Ogre/OgreSDK/fish.mesh.xml");
+	m_ninja.load("models-nonbsd/Ogre/OgreSDK/ninja.mesh.xml");
 }
 
 void MyMain::myLoop()
@@ -38,41 +60,34 @@ void MyMain::myLoop()
 	// 타이니 렌더링
 	mRes = XMMatrixRotationZ(-XM_PI / 2);
 	mRes *= XMMatrixTranslation(0.f, 450.f, 200.f);
-	drawModel(&m_tiny, &m_tinyTime, mRes);
+	m_tiny.draw(mRes);
 
 	// 밥 렌더링
 	mRes = XMMatrixRotationX(XM_PI);
 	mRes *= XMMatrixRotationZ(XM_PI / 2);
 	mRes *= XMMatrixScaling(8.f, 8.f, 8.f);
 	mRes *= XMMatrixTranslation(0.f, 150.f, 200.f);
-	drawModel(&m_bob, &m_bobTime, mRes);
+	m_bob.draw(mRes);
 
 	// 드워프 렌더링
 	mRes = XMMatrixRotationX(-XM_PI / 2);
 	mRes *= XMMatrixRotationZ(XM_PI / 2);
 	mRes *= XMMatrixScaling(8.f, 8.f, 8.f);
 	mRes *= XMMatrixTranslation(0.f, -150.f, 200.f);
-	drawModel(&m_dwarf, &m_dwarfTime, mRes);
+	m_dwarf.draw(mRes);
 
 	// 물고기 렌더링
 	mRes = XMMatrixRotationX(-XM_PI / 2);
 	mRes *= XMMatrixScaling(30.f, 30.f, 30.f);
 	mRes *= XMMatrixTranslation(0.f, -450.f, 200.f);
-	drawModel(&m_fish, &m_fishTime, mRes);
-}
-
-void MyMain::drawModel(cbs::Model * model, double * time, const XMMATRIX& matrix)
-{
-	// 애니메이션 재생
-	Model::Pose pose;
-	Model::AnimationStatus status;
+	m_fish.draw(mRes);
 	
-	status.animation = model->getAnimation(0); // 애니메이션 가져오기
-	status.time = *time + getDelta(); // 애니메이션 시간 이동
-	pose.set(&status); // 포즈 가져오기
-	*time = status.time; // 애니메이션 시간 보정
-	pose.transform(matrix); // 월드 행렬 설정
-	render(*model, pose); // 렌더링
+	// ninja 렌더링
+	mRes = XMMatrixRotationX(-XM_PI / 2);
+	mRes *= XMMatrixRotationZ(-XM_PI / 2);
+	mRes *= XMMatrixScaling(3.f, 3.f, 3.f);
+	mRes *= XMMatrixTranslation(0.f, -450.f, 200.f);
+	m_ninja.draw(mRes);
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int)
