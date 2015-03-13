@@ -29,6 +29,8 @@ namespace cbs
 	class ModelRenderer;
 	typedef unsigned short vindex_t;
 
+	const double DEFAULT_TICK_PER_SECOND = 10.0;
+
 	struct Matrix4x3
 	{
 		float _11, _21, _31, _41;
@@ -106,46 +108,132 @@ namespace cbs
 			friend Model;
 			friend ModelRenderer;
 		public:
-			CBS_DX11LIB_EXPORT Pose();
-			CBS_DX11LIB_EXPORT ~Pose();
-
-			CBS_DX11LIB_EXPORT Pose(const Pose& _copy);
-			CBS_DX11LIB_EXPORT Pose(Pose&& _move);
-			CBS_DX11LIB_EXPORT Pose& operator =(const Pose& _copy);
-			CBS_DX11LIB_EXPORT Pose& operator =(Pose&& _move);
+			inline Pose()
+			{
+			}
+			inline ~Pose()
+			{
+			}
+			inline Pose(const Pose& _copy)
+			{
+				m_transforms = _copy.m_transforms;
+			}
+			inline Pose(Pose&& _move)
+			{
+				m_transforms = std::move(_move.m_transforms);
+			}
+			inline Pose& operator =(const Pose& _copy)
+			{
+				this->~Pose();
+				new(this) Pose(_copy);
+				return *this;
+			}
+			inline Pose& operator =(Pose&& _move)
+			{
+				this->~Pose();
+				new(this) Pose(std::move(_move));
+				return *this;
+			}
 
 			// 할당되어있는 메모리를 지웁니다.
-			CBS_DX11LIB_EXPORT void clear();
+			void clear()
+			{
+				m_transforms.remove();
+			}
 
 			// 특정 노드의 행렬을 변경합니다.
 			// Row-Based 행렬
-			CBS_DX11LIB_EXPORT void setNodeTransform(size_t idx, const XMMATRIX& m);
+			inline void setNodeTransform(size_t idx, const XMMATRIX& m)
+			{
+				assert(idx < m_transforms.size());
+				m_transforms[idx] = m;
+			}
 
 			// 특정 노드의 행렬을 변경합니다.
 			// Row-Based 행렬
-			CBS_DX11LIB_EXPORT void setNodeTransform(size_t idx, const aiMatrix4x4& m);
+			inline void setNodeTransform(size_t idx, const aiMatrix4x4& m)
+			{
+				assert(idx < m_transforms.size());
+				(aiMatrix4x4&)m_transforms[idx] = m;
+			}
 
 			// 특정 노드의 행렬을 가져옵니다.
 			// Row-Based 행렬
-			CBS_DX11LIB_EXPORT const XMMATRIX& getNodeTransform(size_t idx) const;
+			inline const XMMATRIX& getNodeTransform(size_t idx) const
+			{
+				assert(idx < m_transforms.size());
+				return m_transforms[idx];
+			}
 
 			// 해당 행렬로 모델의 포즈를 변형시킵니다.
-			CBS_DX11LIB_EXPORT void transform(const XMMATRIX& m);
+			inline void transform(const XMMATRIX& m)
+			{
+				XMMATRIX tm = XMMatrixTranspose(m);
+				for (size_t i = 0; i < m_transforms.size(); i++)
+				{
+					XMMATRIX& dest = m_transforms[i];
+					dest = tm * dest;
+				}
+			}
 
 			// 해당 행렬로 모델의 포즈를 변형시킵니다.
-			CBS_DX11LIB_EXPORT void transform(const aiMatrix4x4& m);
+			inline void transform(const aiMatrix4x4& m)
+			{
+				XMMATRIX nm;
+				(aiMatrix4x4&)nm = m;
+				for (size_t i = 0; i < m_transforms.size(); i++)
+				{
+					XMMATRIX& dest = m_transforms[i];
+					dest = nm * dest;
+				}
+			}
 			
 			// 애니메이션에서 포즈 가져오기
 			CBS_DX11LIB_EXPORT bool set(AnimationStatus* status);
 			
 			// 행렬 상수 배
-			CBS_DX11LIB_EXPORT Pose& operator *= (float weight);
+			inline Pose& operator *= (float weight)
+			{
+				XMVECTOR * dst = (XMVECTOR*)m_transforms.data();
+				XMVECTOR * end = dst + m_transforms.size() * (sizeof(XMMATRIX) / sizeof(XMVECTOR));
+				while (dst != end)
+				{
+					*dst = XMVectorScale(*dst, weight);
+					dst++;
+				}
+				return *this;
+			}
 			
 			// 행렬 덧셈
-			CBS_DX11LIB_EXPORT Pose& operator += (const Pose & other);
+			inline Pose& operator += (const Pose & other)
+			{
+				assert(m_transforms.size() == other.m_transforms.size());
+
+				XMVECTOR * dst = (XMVECTOR*)m_transforms.data();
+				XMVECTOR * end = dst + m_transforms.size() * (sizeof(XMMATRIX) / sizeof(XMVECTOR));
+				const XMVECTOR * src = (XMVECTOR*)other.m_transforms.data();
+
+				while (dst != end)
+				{
+					*dst = XMVectorAdd(*dst, *src);
+					dst++;
+					src++;
+				}
+				return *this;
+			}
 			
 			// 해당 행렬 곱셈
-			CBS_DX11LIB_EXPORT Pose& operator *= (const XMMATRIX& m);
+			inline Pose& operator *= (const XMMATRIX& m)
+			{
+				XMMATRIX * dst = m_transforms.data();
+				XMMATRIX * end = dst + m_transforms.size();
+
+				while (dst != end)
+				{
+					*dst *= m;
+				}
+				return *this;
+			}
 
 			// 해당 행렬 곱셈
 			inline Pose& operator *= (const aiMatrix4x4& m)
@@ -212,13 +300,38 @@ namespace cbs
 			friend Model;
 			friend Pose;
 		public:
-			CBS_DX11LIB_EXPORT Animation();
-			CBS_DX11LIB_EXPORT Animation(Model * model, size_t idx);
+			inline Animation()
+				: m_nodeCount(0), m_animation(nullptr), m_index(0), m_root(nullptr), m_tps(DEFAULT_TICK_PER_SECOND)
+			{
+			}
+			inline Animation(Model * model, size_t idx)
+				: m_nodeCount(model->m_nodeCount), m_animation(model->m_scene->mAnimations[idx]), m_index(idx), m_root(model->m_scene->mRootNode)
+			{
+				if (m_animation->mTicksPerSecond == 0)
+				{
+					m_tps = DEFAULT_TICK_PER_SECOND;
+				}
+				else
+				{
+					m_tps = m_animation->mTicksPerSecond;
+				}
+				m_duration = m_animation->mDuration / m_tps;
+			}
 
 			// 애니메이션 길이 (초 단위)
-			CBS_DX11LIB_EXPORT double getDuration() const;
-			CBS_DX11LIB_EXPORT double getTPS() const;
-			CBS_DX11LIB_EXPORT void setTPS(double tps);
+			inline double getDuration() const
+			{
+				return m_duration;
+			}
+			inline double getTPS() const
+			{
+				return m_tps;
+			}
+			inline void setTPS(double tps)
+			{
+				m_tps = tps;
+				m_duration = m_animation->mDuration / tps;
+			}
 
 		private:
 			double m_tps;
@@ -246,31 +359,8 @@ namespace cbs
 			AutoDeleteArray<aiNodeAnim *> m_nodeanim;
 		};
 
-		CBS_DX11LIB_EXPORT Model();
-		CBS_DX11LIB_EXPORT explicit Model(const char * strName);
-		CBS_DX11LIB_EXPORT Model(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl);
-		CBS_DX11LIB_EXPORT ~Model();
-
-		CBS_DX11LIB_EXPORT Model(Model&& _move);
-		CBS_DX11LIB_EXPORT Model & operator =(Model && _move);
-
-		// 전체 애니메이션의 초당 Tick Count를 변경
-		CBS_DX11LIB_EXPORT void setAnimationTPS(double tps);
-
-		// 애니메이션 개수 가져오기
-		CBS_DX11LIB_EXPORT size_t getAnimationCount() const;
-
-		// 애니메이션 정보 가져오기
-		CBS_DX11LIB_EXPORT Animation * getAnimation(size_t animation) const;
-		
-		CBS_DX11LIB_EXPORT operator bool();
-		CBS_DX11LIB_EXPORT	bool operator !();
-
-		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_BASIC_LAYOUT[3];
-		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_SKINNED_LAYOUT[5];
-
 	private:
-		void _create(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl);
+		CBS_DX11LIB_EXPORT void _create(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl);
 		Model(const Model& _copy); // = delete
 		Model & operator =(const Model & _copy); // = delete
 		void _makeTexture(const char * strName);
@@ -295,6 +385,35 @@ namespace cbs
 		Buffer m_vb;
 		Buffer m_ib;
 		size_t m_nodeCount;
+	public:
+
+		inline Model()
+		{
+			m_scene = nullptr;
+			m_nodeCount = 0;
+		}
+		explicit Model(const char * strName);
+		CBS_DX11LIB_EXPORT Model(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl);
+		CBS_DX11LIB_EXPORT ~Model();
+
+		CBS_DX11LIB_EXPORT Model(Model&& _move);
+		CBS_DX11LIB_EXPORT Model & operator =(Model && _move);
+
+		// 전체 애니메이션의 초당 Tick Count를 변경
+		CBS_DX11LIB_EXPORT void setAnimationTPS(double tps);
+
+		// 애니메이션 개수 가져오기
+		CBS_DX11LIB_EXPORT size_t getAnimationCount() const;
+
+		// 애니메이션 정보 가져오기
+		CBS_DX11LIB_EXPORT Animation * getAnimation(size_t animation) const;
+
+		CBS_DX11LIB_EXPORT operator bool();
+		CBS_DX11LIB_EXPORT	bool operator !();
+
+		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_BASIC_LAYOUT[3];
+		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_SKINNED_LAYOUT[5];
+
 	};
 
 	class ModelRenderer

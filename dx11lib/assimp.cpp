@@ -114,7 +114,6 @@ namespace
 		}
 	};
 
-	const double DEFAULT_TICK_PER_SECOND = 10.0;
 }
 
 const cbs::VertexLayout cbs::Model::DEFAULT_BASIC_LAYOUT[3] =
@@ -149,71 +148,6 @@ cbs::AssimpLogger::~AssimpLogger()
 {
 	aiDetachAllLogStreams();
 }
-
-cbs::Model::Pose::Pose()
-{
-}
-cbs::Model::Pose::~Pose()
-{
-}
-cbs::Model::Pose::Pose(const Pose& _copy)
-{
-	m_transforms = _copy.m_transforms;
-}
-cbs::Model::Pose::Pose(Pose&& _move)
-{
-	m_transforms = std::move(_move.m_transforms);
-}
-cbs::Model::Pose& cbs::Model::Pose::operator =(const Pose& _copy)
-{
-	this->~Pose();
-	new(this) Pose(_copy);
-	return *this;
-}
-cbs::Model::Pose& cbs::Model::Pose::operator =(Pose&& _move)
-{
-	this->~Pose();
-	new(this) Pose(std::move(_move));
-	return *this;
-}
-void cbs::Model::Pose::clear()
-{
-	m_transforms.remove();
-}
-void cbs::Model::Pose::setNodeTransform(size_t idx, const XMMATRIX& m)
-{
-	assert(idx < m_transforms.size());
-	m_transforms[idx] = m;
-}
-void cbs::Model::Pose::setNodeTransform(size_t idx, const aiMatrix4x4& m)
-{
-	assert(idx < m_transforms.size());
-	(aiMatrix4x4&)m_transforms[idx] = m;
-}
-const XMMATRIX& cbs::Model::Pose::getNodeTransform(size_t idx) const
-{
-	assert(idx < m_transforms.size());
-	return m_transforms[idx];
-}
-void cbs::Model::Pose::transform(const XMMATRIX& m)
-{
-	XMMATRIX tm = XMMatrixTranspose(m);
-	for (size_t i = 0; i < m_transforms.size(); i++)
-	{
-		XMMATRIX& dest = m_transforms[i];
-		dest = tm * dest;
-	}
-}
-void cbs::Model::Pose::transform(const aiMatrix4x4& m)
-{
-	XMMATRIX nm;
-	(aiMatrix4x4&)nm = m;
-	for (size_t i = 0; i < m_transforms.size(); i++)
-	{
-		XMMATRIX& dest = m_transforms[i];
-		dest = nm * dest;
-	}
-}
 bool cbs::Model::Pose::set(AnimationStatus* status)
 {
 	assert(status != nullptr);
@@ -247,44 +181,6 @@ void cbs::Model::Pose::_resize(size_t size)
 {
 	m_transforms.resizeWithoutKeep(size);
 }
-cbs::Model::Pose& cbs::Model::Pose::operator *= (float weight)
-{
-	XMVECTOR * dst = (XMVECTOR*)m_transforms.data();
-	XMVECTOR * end = dst + m_transforms.size() * (sizeof(XMMATRIX) / sizeof(XMVECTOR));
-	while (dst != end)
-	{
-		*dst = XMVectorScale(*dst, weight);
-		dst ++;
-	}
-	return *this;
-}
-cbs::Model::Pose& cbs::Model::Pose::operator += (const Pose & other)
-{
-	assert(m_transforms.size() == other.m_transforms.size());
-
-	XMVECTOR * dst = (XMVECTOR*)m_transforms.data();
-	XMVECTOR * end = dst + m_transforms.size() * (sizeof(XMMATRIX) / sizeof(XMVECTOR));
-	const XMVECTOR * src = (XMVECTOR*)other.m_transforms.data();
-
-	while (dst != end)
-	{
-		*dst = XMVectorAdd(*dst, *src);
-		dst++;
-		src++;
-	}
-	return *this;
-}
-cbs::Model::Pose& cbs::Model::Pose::operator *= (const XMMATRIX& m)
-{
-	XMMATRIX * dst = m_transforms.data();
-	XMMATRIX * end = dst + m_transforms.size();
-
-	while (dst != end)
-	{
-		*dst *= m;
-	}
-	return *this;
-}
 
 cbs::Model::NodeExtra::NodeExtra(size_t id)
 	:m_id(id), m_nodeanim(nullptr)
@@ -316,42 +212,6 @@ aiNodeAnim * cbs::Model::NodeExtra::getAnimation(size_t id)
 	return m_nodeanim[id];
 }
 
-cbs::Model::Animation::Animation()
-	: m_nodeCount(0), m_animation(nullptr), m_index(0), m_root(nullptr), m_tps(DEFAULT_TICK_PER_SECOND)
-{
-}
-cbs::Model::Animation::Animation(Model * model, size_t idx)
-	: m_nodeCount(model->m_nodeCount), m_animation(model->m_scene->mAnimations[idx]), m_index(idx), m_root(model->m_scene->mRootNode)
-{
-	if (m_animation->mTicksPerSecond == 0)
-	{
-		m_tps = DEFAULT_TICK_PER_SECOND;
-	}
-	else
-	{
-		m_tps = m_animation->mTicksPerSecond;
-	}
-	m_duration = m_animation->mDuration / m_tps;
-}
-double cbs::Model::Animation::getDuration() const
-{
-	return m_duration;
-}
-double cbs::Model::Animation::getTPS() const
-{
-	return m_tps;
-}
-void cbs::Model::Animation::setTPS(double tps)
-{
-	m_tps = tps;
-	m_duration = m_animation->mDuration / tps;
-}
-
-cbs::Model::Model()
-{
-	m_scene = nullptr;
-	m_nodeCount = 0;
-}
 cbs::Model::Model(const char * strName)
 {
 	_create(strName, DEFAULT_BASIC_LAYOUT, DEFAULT_SKINNED_LAYOUT);
