@@ -85,8 +85,8 @@ void MyMain::myLoop()
 	// ninja ·»´õ¸µ
 	mRes = XMMatrixRotationX(-XM_PI / 2);
 	mRes *= XMMatrixRotationZ(-XM_PI / 2);
-	mRes *= XMMatrixScaling(3.f, 3.f, 3.f);
-	mRes *= XMMatrixTranslation(0.f, -450.f, 200.f);
+	mRes *= XMMatrixScaling(2.5f, 2.5f, 2.5f);
+	mRes *= XMMatrixTranslation(-450.f, 0.f, 200.f);
 	m_ninja.draw(mRes);
 }
 

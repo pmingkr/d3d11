@@ -10,16 +10,16 @@
 
 #include <vector>
 
-struct aiScene;
-struct aiNode;
-struct aiMaterial;
-struct aiNodeAnim;
-struct aiAnimation;
-
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4819)
-#include <assimp/types.h>
+#endif
+#include <assimp/cimport.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 
 namespace cbs
 {
@@ -107,6 +107,11 @@ namespace cbs
 		{
 			friend Model;
 			friend ModelRenderer;
+		private:
+			void _resize(size_t size);
+
+			AlignedArray<XMMATRIX, sizeof(__m128)> m_transforms;
+
 		public:
 			inline Pose()
 			{
@@ -288,10 +293,6 @@ namespace cbs
 				return pose;
 			}
 			
-		private:
-			void _resize(size_t size);
-
-			AlignedArray<XMMATRIX, sizeof(__m128)> m_transforms;
 		};
 
 		// 애니메이션 정보
@@ -299,6 +300,14 @@ namespace cbs
 		{
 			friend Model;
 			friend Pose;
+		private:
+			double m_tps;
+			double m_duration;
+			aiAnimation * m_animation;
+			aiNode * m_root;
+			size_t m_nodeCount;
+			size_t m_index;
+
 		public:
 			inline Animation()
 				: m_nodeCount(0), m_animation(nullptr), m_index(0), m_root(nullptr), m_tps(DEFAULT_TICK_PER_SECOND)
@@ -332,31 +341,45 @@ namespace cbs
 				m_tps = tps;
 				m_duration = m_animation->mDuration / tps;
 			}
-
-		private:
-			double m_tps;
-			double m_duration;
-			aiAnimation * m_animation;
-			aiNode * m_root;
-			size_t m_nodeCount;
-			size_t m_index;
 		};
 
 		class NodeExtra
 		{
-		public:
-			CBS_DX11LIB_EXPORT NodeExtra(size_t id);
-			CBS_DX11LIB_EXPORT ~NodeExtra();
-
-			CBS_DX11LIB_EXPORT size_t getId();
-			CBS_DX11LIB_EXPORT bool hasAnimation();
-			CBS_DX11LIB_EXPORT void setAnimationCount(size_t count);
-			CBS_DX11LIB_EXPORT void setAnimation(size_t id, aiNodeAnim * anim);
-			CBS_DX11LIB_EXPORT aiNodeAnim * getAnimation(size_t id);
-
 		private:
 			const size_t m_id;
 			AutoDeleteArray<aiNodeAnim *> m_nodeanim;
+
+		public:
+			inline NodeExtra(size_t id)
+				:m_id(id), m_nodeanim(nullptr)
+			{
+			}
+			inline ~NodeExtra()
+			{
+			}
+
+			inline size_t getId()
+			{
+				return m_id;
+			}
+			inline bool hasAnimation()
+			{
+				return m_nodeanim != nullptr;
+			}
+			inline void setAnimationCount(size_t count)
+			{
+				m_nodeanim = new aiNodeAnim*[count];
+				memset(m_nodeanim, 0, sizeof(aiNodeAnim*) * count);
+			}
+			inline void setAnimation(size_t id, aiNodeAnim * anim)
+			{
+				m_nodeanim[id] = anim;
+			}
+			inline aiNodeAnim * getAnimation(size_t id)
+			{
+				if (m_nodeanim == nullptr) return nullptr;
+				return m_nodeanim[id];
+			}
 		};
 
 	private:
@@ -385,48 +408,190 @@ namespace cbs
 		Buffer m_vb;
 		Buffer m_ib;
 		size_t m_nodeCount;
+
 	public:
+		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_BASIC_LAYOUT[3];
+		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_SKINNED_LAYOUT[5];
 
 		inline Model()
 		{
 			m_scene = nullptr;
 			m_nodeCount = 0;
 		}
-		explicit Model(const char * strName);
-		CBS_DX11LIB_EXPORT Model(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl);
+		inline explicit Model(const char * strName)
+		{
+			_create(strName, DEFAULT_BASIC_LAYOUT, DEFAULT_SKINNED_LAYOUT);
+		}
+		inline Model(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl)
+		{
+			_create(strName, basic_vl, skinned_vl);
+		}
 		CBS_DX11LIB_EXPORT ~Model();
 
-		CBS_DX11LIB_EXPORT Model(Model&& _move);
-		CBS_DX11LIB_EXPORT Model & operator =(Model && _move);
+		inline Model(Model&& _move)
+		{
+			m_meshes = std::move(_move.m_meshes);
+			m_materials = std::move(_move.m_materials);
+			m_animations = std::move(_move.m_animations);
+			m_vb = std::move(_move.m_vb);
+			m_ib = std::move(_move.m_ib);
+			m_scene = _move.m_scene;
+			m_nodeCount = _move.m_nodeCount;
+			_move.m_scene = nullptr;
+			_move.m_nodeCount = 0;
+		}
+		inline Model & operator =(Model && _move)
+		{
+			this->~Model();
+			new(this) cbs::Model(std::move(_move));
+			return *this;
+		}
 
 		// 전체 애니메이션의 초당 Tick Count를 변경
-		CBS_DX11LIB_EXPORT void setAnimationTPS(double tps);
+		inline void setAnimationTPS(double tps)
+		{
+			for (unsigned int i = 0; i < m_scene->mNumAnimations; i++)
+			{
+				m_animations[i].setTPS(tps);
+			}
+		}
 
 		// 애니메이션 개수 가져오기
-		CBS_DX11LIB_EXPORT size_t getAnimationCount() const;
+		inline size_t getAnimationCount() const
+		{
+			return m_scene->mNumAnimations;
+		}
 
 		// 애니메이션 정보 가져오기
-		CBS_DX11LIB_EXPORT Animation * getAnimation(size_t animation) const;
+		inline Animation * getAnimation(size_t animation) const
+		{
+			assert(animation < m_scene->mNumAnimations);
+			Animation * anim = &m_animations[animation];
+			if (anim->m_animation == nullptr) return nullptr;
+			return anim;
+		}
 
-		CBS_DX11LIB_EXPORT operator bool();
-		CBS_DX11LIB_EXPORT	bool operator !();
-
-		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_BASIC_LAYOUT[3];
-		CBS_DX11LIB_EXPORT static const VertexLayout DEFAULT_SKINNED_LAYOUT[5];
+		inline operator bool()
+		{
+			return m_scene != nullptr;
+		}
+		inline bool operator !()
+		{
+			return m_scene == nullptr;
+		}
 
 	};
 
 	class ModelRenderer
 	{
+	private:
+		inline void _renderNode(const Model & model, aiNode * node, const XMMATRIX & mParent)
+		{
+			XMMATRIX transform;
+			(aiMatrix4x4&)transform = node->mTransformation;
+
+			XMMATRIX m = mParent * transform;
+
+			if (node->mNumMeshes != 0)
+			{
+				setWorld(m);
+
+				for (unsigned int n = 0; n < node->mNumMeshes; ++n)
+				{
+					const aiMesh* mesh = model.m_scene->mMeshes[node->mMeshes[n]];
+					const Model::MeshExtra& vbregion = model.m_meshes[node->mMeshes[n]];
+					const cbs::Material& mtl = model.m_materials[mesh->mMaterialIndex];
+
+					g_context->IASetVertexBuffers(0, 1, &model.m_vb, &vbregion.stride, &vbregion.offset);
+					g_context->RSSetState(mtl.rasterizer);
+					setMaterial(mtl);
+					g_context->IASetPrimitiveTopology(vbregion.topology);
+					g_context->DrawIndexed(vbregion.icount, vbregion.ioffset, 0);
+				}
+			}
+
+			for (unsigned int n = 0; n < node->mNumChildren; ++n)
+			{
+				_renderNode(model, node->mChildren[n], m);
+			}
+		}
+		inline void _renderNode(const Model & model, aiNode * node, const Model::Pose & pose)
+		{
+			Model::NodeExtra* nodeex = (Model::NodeExtra*)node->mAttachment;
+
+			for (unsigned int n = 0; n < node->mNumMeshes; ++n)
+			{
+				const aiMesh* mesh = model.m_scene->mMeshes[node->mMeshes[n]];
+				const Model::MeshExtra& meshex = model.m_meshes[node->mMeshes[n]];
+				const cbs::Material& mtl = model.m_materials[mesh->mMaterialIndex];
+
+				if (mesh->mBones != nullptr)
+				{
+					Matrix4x3 bones[AI_BONE_LIMIT];
+					if (mesh->mNumBones == 1)
+					{
+						size_t nodeId = meshex.boneToNode[0];
+
+						XMMATRIX offsetm;
+						(aiMatrix4x4&)offsetm = mesh->mBones[0]->mOffsetMatrix;
+						setWorld(pose.m_transforms[nodeId] * offsetm);
+					}
+					else
+					{
+						for (unsigned int bi = 0; bi < mesh->mNumBones; bi++)
+						{
+							size_t nodeId = meshex.boneToNode[bi];
+
+							XMMATRIX offsetm;
+							(aiMatrix4x4&)offsetm = mesh->mBones[bi]->mOffsetMatrix;
+							bones[bi] = pose.m_transforms[nodeId] * offsetm;
+						}
+						setBoneWorlds(bones, mesh->mNumBones);
+					}
+				}
+				else
+				{
+					assert(nodeex != nullptr);
+					setWorld(pose.m_transforms[nodeex->getId()]);
+				}
+
+				g_context->IASetVertexBuffers(0, 1, &model.m_vb, &meshex.stride, &meshex.offset);
+				g_context->RSSetState(mtl.rasterizer);
+				setMaterial(mtl);
+				g_context->IASetPrimitiveTopology(meshex.topology);
+				g_context->DrawIndexed(meshex.icount, meshex.ioffset, 0);
+			}
+
+			for (unsigned int n = 0; n < node->mNumChildren; ++n)
+			{
+				_renderNode(model, node->mChildren[n], pose);
+			}
+		}
+
 	public:
 		// 애니메이션 없이 렌더링
-		CBS_DX11LIB_EXPORT void render(const Model & model, const aiMatrix4x4 & world);
+		inline void render(const Model & model, const aiMatrix4x4 & world)
+		{
+			g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
+
+			XMMATRIX m;
+			(aiMatrix4x4&)m = world;
+			_renderNode(model, model.m_scene->mRootNode, m);
+		}
 
 		// 애니메이션 없이 렌더링
-		CBS_DX11LIB_EXPORT void render(const Model & model, const XMMATRIX & world);
+		inline void render(const Model & model, const XMMATRIX & world)
+		{
+			g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
+			_renderNode(model, model.m_scene->mRootNode, XMMatrixTranspose(world));
+		}
 
 		// 해당 포즈로 렌더링
-		CBS_DX11LIB_EXPORT void render(const Model & model, const Model::Pose & pose);
+		inline void render(const Model & model, const Model::Pose & pose)
+		{
+			g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
+			_renderNode(model, model.m_scene->mRootNode, pose);
+		}
 
 		// 렌더러가 렌더링시 사용할 제질을 받아온다.
 		virtual void setMaterial(const Material & mtl) = 0;
@@ -438,10 +603,6 @@ namespace cbs
 		// 렌더러가 렌더링시 사용할 행렬 목록을 받아온다.
 		// 4x3 Row-Based 행렬
 		virtual void setBoneWorlds(const Matrix4x3 * matrix, size_t m4x3count) = 0;
-
-	private:
-		void _renderNode(const Model & model, aiNode * node, const XMMATRIX & mParent);
-		void _renderNode(const Model & model, aiNode * node, const Model::Pose & pose);
 
 	};
 

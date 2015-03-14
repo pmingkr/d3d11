@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_PropertySheetDisplayName>Export</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <PostBuildEvent />
+    <PostBuildEvent />
+    <PostBuildEvent>
+      <Command>if not exist "$(SolutionDir)bin" mkdir "$(SolutionDir)bin"
+set outpath=$(SolutionDir)bin/$(PlatformShortName)
+if $(OutputType)==staticlibrary set outpath=%outpath%-static
+set conf=$(Configuration)
+if %conf:~0,5%==Debug set outpath=%outpath%-debug
+set outpath=%outpath%/
+if not exist "%outpath%" mkdir "%outpath%"
+copy "$(TargetPath)" "%outpath%$(TargetFileName)"
+if $(OutputType)==library copy "$(TargetDir)$(TargetName).lib" "%outpath%$(TargetName).lib"
+%(Command)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

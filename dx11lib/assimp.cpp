@@ -3,13 +3,6 @@
 #include "include/cbs/d3d11/texture.h"
 #include "include/cbs/d3d11/state.h"
 
-#pragma warning(push)
-#pragma warning(disable:4819)
-#include <assimp/cimport.h>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#pragma warning(pop)
-
 #include <new>
 #include <map>
 
@@ -182,98 +175,6 @@ void cbs::Model::Pose::_resize(size_t size)
 	m_transforms.resizeWithoutKeep(size);
 }
 
-cbs::Model::NodeExtra::NodeExtra(size_t id)
-	:m_id(id), m_nodeanim(nullptr)
-{
-}
-cbs::Model::NodeExtra::~NodeExtra()
-{
-}
-size_t cbs::Model::NodeExtra::getId()
-{
-	return m_id;
-}
-bool cbs::Model::NodeExtra::hasAnimation()
-{
-	return m_nodeanim != nullptr;
-}
-void cbs::Model::NodeExtra::setAnimationCount(size_t count)
-{
-	m_nodeanim = new aiNodeAnim*[count];
-	memset(m_nodeanim, 0, sizeof(aiNodeAnim*) * count);
-}
-void cbs::Model::NodeExtra::setAnimation(size_t id, aiNodeAnim * anim)
-{
-	m_nodeanim[id] = anim;
-}
-aiNodeAnim * cbs::Model::NodeExtra::getAnimation(size_t id)
-{
-	if(m_nodeanim == nullptr) return nullptr;
-	return m_nodeanim[id];
-}
-
-cbs::Model::Model(const char * strName)
-{
-	_create(strName, DEFAULT_BASIC_LAYOUT, DEFAULT_SKINNED_LAYOUT);
-}
-cbs::Model::Model(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl)
-{
-	_create(strName, basic_vl, skinned_vl);
-}
-cbs::Model::~Model()
-{
-	if (m_scene != nullptr)
-	{
-		_callEachNode(m_scene->mRootNode, [&](aiNode * node) {
-			delete (NodeExtra*)node->mAttachment;
-		});
-		aiReleaseImport(m_scene);
-	}
-}
-cbs::Model::Model(Model&& _move)
-{
-	m_meshes = std::move(_move.m_meshes);
-	m_materials = std::move(_move.m_materials);
-	m_animations = std::move(_move.m_animations);
-	m_vb = std::move(_move.m_vb);
-	m_ib = std::move(_move.m_ib);
-	m_scene = _move.m_scene;
-	m_nodeCount = _move.m_nodeCount;
-	_move.m_scene = nullptr;
-	_move.m_nodeCount = 0;
-}
-cbs::Model & cbs::Model::operator =(Model && _move)
-{
-	this->~Model();
-	new(this) cbs::Model(std::move(_move));
-	return *this;
-}
-void cbs::Model::setAnimationTPS(double tps)
-{
-	for (unsigned int i = 0; i < m_scene->mNumAnimations; i++)
-	{
-		m_animations[i].setTPS(tps);
-	}
-}
-size_t cbs::Model::getAnimationCount() const
-{
-	return m_scene->mNumAnimations;
-}
-cbs::Model::Animation * cbs::Model::getAnimation(size_t animation) const
-{
-	assert(animation < m_scene->mNumAnimations);
-	Animation * anim = &m_animations[animation];
-	if(anim->m_animation == nullptr) return nullptr;
-	return anim;
-}
-cbs::Model::operator bool()
-{
-	return m_scene != nullptr;
-}
-bool cbs::Model::operator !()
-{
-	return m_scene == nullptr;
-}
 void cbs::Model::_create(const char * strName, DataList<VertexLayout> basic_vl, DataList<VertexLayout> skinned_vl)
 {
 	m_scene = aiImportFile(strName, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_FlipUVs | aiProcess_SortByPType | aiProcess_LimitBoneWeights);
@@ -287,6 +188,16 @@ void cbs::Model::_create(const char * strName, DataList<VertexLayout> basic_vl, 
 
 	_makeTexture(strName);
 	_makeBuffer(basic_vl, skinned_vl);
+}
+cbs::Model::~Model()
+{
+	if (m_scene != nullptr)
+	{
+		_callEachNode(m_scene->mRootNode, [&](aiNode * node) {
+			delete (NodeExtra*)node->mAttachment;
+		});
+		aiReleaseImport(m_scene);
+	}
 }
 void cbs::Model::_makeTexture(const char * strName)
 {
@@ -697,106 +608,5 @@ void cbs::Model::_callEachNode(aiNode * node, LAMBDA &lambda)
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
 		_callEachNode(node->mChildren[i], lambda);
-	}
-}
-
-void cbs::ModelRenderer::render(const Model & model, const aiMatrix4x4 & world)
-{
-	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
-
-	XMMATRIX m;
-	(aiMatrix4x4&)m = world;
-	_renderNode(model, model.m_scene->mRootNode, m);
-}
-void cbs::ModelRenderer::render(const Model & model, const XMMATRIX & world)
-{
-	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
-	_renderNode(model, model.m_scene->mRootNode, XMMatrixTranspose(world));
-}
-void cbs::ModelRenderer::render(const Model & model, const Model::Pose & pose)
-{
-	g_context->IASetIndexBuffer(model.m_ib, DXGI_FORMAT_R16_UINT, 0);
-	_renderNode(model, model.m_scene->mRootNode, pose);
-}
-void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const XMMATRIX & mParent)
-{
-	XMMATRIX transform;
-	(aiMatrix4x4&)transform = node->mTransformation;
-
-	XMMATRIX m = mParent * transform;
-
-	if(node->mNumMeshes != 0)
-	{
-		setWorld(m);
-
-		for (unsigned int n = 0; n < node->mNumMeshes; ++n)
-		{
-			const aiMesh* mesh = model.m_scene->mMeshes[node->mMeshes[n]];
-			const Model::MeshExtra& vbregion = model.m_meshes[node->mMeshes[n]];
-			const cbs::Material& mtl = model.m_materials[mesh->mMaterialIndex];
-
-			g_context->IASetVertexBuffers(0, 1, &model.m_vb, &vbregion.stride, &vbregion.offset);
-			g_context->RSSetState(mtl.rasterizer);
-			setMaterial(mtl);
-			g_context->IASetPrimitiveTopology(vbregion.topology);
-			g_context->DrawIndexed(vbregion.icount, vbregion.ioffset, 0);
-		}
-	}
-
-	for (unsigned int n = 0; n < node->mNumChildren; ++n)
-	{
-		_renderNode(model, node->mChildren[n], m);
-	}
-}
-void cbs::ModelRenderer::_renderNode(const Model & model, aiNode * node, const Model::Pose & pose)
-{
-	Model::NodeExtra* nodeex = (Model::NodeExtra*)node->mAttachment;
-
-	for (unsigned int n = 0; n < node->mNumMeshes; ++n)
-	{
-		const aiMesh* mesh = model.m_scene->mMeshes[node->mMeshes[n]];
-		const Model::MeshExtra& meshex = model.m_meshes[node->mMeshes[n]];
-		const cbs::Material& mtl = model.m_materials[mesh->mMaterialIndex];
-
-		if (mesh->mBones != nullptr)
-		{
-			Matrix4x3 bones[AI_BONE_LIMIT];
-			if (mesh->mNumBones == 1)
-			{
-				size_t nodeId = meshex.boneToNode[0];
-
-				XMMATRIX offsetm;
-				(aiMatrix4x4&)offsetm = mesh->mBones[0]->mOffsetMatrix;
-				setWorld(pose.m_transforms[nodeId] * offsetm);
-			}
-			else
-			{
-				for (unsigned int bi = 0; bi < mesh->mNumBones; bi++)
-				{
-					size_t nodeId = meshex.boneToNode[bi];
-
-					XMMATRIX offsetm;
-					(aiMatrix4x4&)offsetm = mesh->mBones[bi]->mOffsetMatrix;
-					bones[bi] = pose.m_transforms[nodeId] * offsetm;
-				}
-				setBoneWorlds(bones, mesh->mNumBones);
-			}
-		}
-		else
-		{
-			assert(nodeex != nullptr);
-			setWorld(pose.m_transforms[nodeex->getId()]);
-		}
-
-		g_context->IASetVertexBuffers(0, 1, &model.m_vb, &meshex.stride, &meshex.offset);
-		g_context->RSSetState(mtl.rasterizer);
-		setMaterial(mtl);
-		g_context->IASetPrimitiveTopology(meshex.topology);
-		g_context->DrawIndexed(meshex.icount, meshex.ioffset, 0);
-	}
-	
-	for (unsigned int n = 0; n < node->mNumChildren; ++n)
-	{
-		_renderNode(model, node->mChildren[n], pose);
 	}
 }
