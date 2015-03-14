@@ -6,7 +6,11 @@
 #include <new>
 #include <map>
 
+#ifdef _DEBUG
+#pragma comment(lib, "assimpd.lib")
+#else
 #pragma comment(lib, "assimp.lib")
+#endif
 
 namespace
 {

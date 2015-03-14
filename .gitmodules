@@ -1,0 +1,6 @@
+[submodule "assimp"]
+	path = assimp
+	url = http://git.nlip.kr/zext-assimp-bin
+[submodule "d3d11lib-bin"]
+	path = d3d11lib-bin
+	url = http://git.nlip.kr/semi-d3d11lib-bin/

@@ -4,11 +4,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir)assimp;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)assimp;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)assimp/$(PlatformShortName);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <PostBuildEvent>
-      <Command>if not exist "$(OutDir)assimp.dll" copy "$(SolutionDir)assimp\assimp.dll" "$(OutDir)assimp.dll"</Command>
+      <Command>if not exist "$(OutDir)assimp.dll" copy "$(SolutionDir)assimp\$(PlatformShortName)\assimp.dll" "$(OutDir)assimp.dll"</Command>
     </PostBuildEvent>
     <FxCompile>
       <VariableName>s_%(Filename)</VariableName>
